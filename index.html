@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FibraLink Telecom — BI 5 Painéis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+// ============ CONTAS A PAGAR ============
+const m12cap = ['Mar/25','Abr/25','Mai/25','Jun/25','Jul/25','Ago/25','Set/25','Out/25','Nov/25','Dez/25','Jan/26','Fev/26'];
+const recMes  = [560454,561802,557290,581838,621735,638877,678453,726543,655909,646877,674957,695485];
+const custMes = [187400,193200,189800,201400,196300,204800,211600,219400,207800,228900,215300,208600];
+const ebitMes = recMes.map((r,i)=>r-custMes[i]);
+const margemMes = ebitMes.map((e,i)=>parseFloat((e/recMes[i]*100).toFixed(1)));
+const clientesMes = [5374,5481,5569,5720,5861,6009,6156,6230,6333,6517,6698,6923];
+const custoCliente = custMes.map((c,i)=>parseFloat((c/clientesMes[i]).toFixed(2)));
+const folhaRec = custMes.map((_,i)=>parseFloat(((101158/recMes[i])*100).toFixed(1)));
+
+doughnut('f2_comp',
+  ['Folha c/ Encargos','Custos Fixos','Custos Variáveis'],
+  [101158,34410,33200],
+  ['#ef4444','#f97316','#fbbf24']
+);
+
+new Chart(document.getElementById('f2_dre12'),{type:'bar',data:{labels:m12cap,datasets:[
+  {label:'Custos Totais',data:custMes,backgroundColor:'rgba(239,68,68,.6)',borderRadius:2,stack:'a'},
+  {label:'EBITDA',data:ebitMes,backgroundColor:'rgba(34,197,94,.65)',borderRadius:2,stack:'a'},
+]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>bfmt(ctx.raw)}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9}}},y:{stacked:true,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}});
+
+lineChart('f2_margem',m12cap,[{label:'Margem EBITDA %',data:margemMes,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.08)',borderWidth:2.5,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#22c55e',pointBorderColor:'#0a0a0f',pointBorderWidth:2}],{y:{min:60,ticks:{callback:v=>`${v}%`}}});
+
+barChart('f2_folha',['Opnl/Atend.','Téc. Campo','Gestão','Administrativo','Comercial Ext.'],[
+  {label:'Salário Bruto',data:[21000,14000,11000,9600,5000],backgroundColor:'rgba(59,130,246,.65)',borderRadius:2,stack:'a'},
+  {label:'Encargos',data:[14280,9520,7480,6528,2750],backgroundColor:'rgba(239,68,68,.55)',borderRadius:2,stack:'a'},
+],{stack:true,sy:{ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}});
+
+doughnut('f2_fixvar',['Folha','Fixos','Variáveis'],[101158,34410,33200],['#ef4444','#f97316','#fbbf24']);
+
+new Chart(document.getElementById('f2_evolucao'),{type:'bar',data:{labels:m12cap,datasets:[
+  {label:'Receita',data:recMes,type:'line',borderColor:'#22c55e',borderWidth:2.5,tension:0.4,pointRadius:3,pointBackgroundColor:'#22c55e',fill:false,yAxisID:'y'},
+  {label:'Custos Totais',data:custMes,backgroundColor:'rgba(239,68,68,.6)',borderRadius:2,yAxisID:'y'},
+  {label:'EBITDA',data:ebitMes,backgroundColor:'rgba(34,197,94,.55)',borderRadius:2,yAxisID:'y'},
+]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>bfmt(ctx.raw)}}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}});
+
+lineChart('f2_cpcliente',m12cap,[{label:'Custo/Cliente',data:custoCliente,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.08)',borderWidth:2,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#f97316'}],{y:{ticks:{callback:v=>`R$${v}`}}});
+
+lineChart('f2_folharec',m12cap,[{label:'Folha/Receita %',data:folhaRec,borderColor:'#a855f7',backgroundColor:'rgba(168,85,247,.08)',borderWidth:2,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#a855f7'}],{y:{ticks:{callback:v=>`${v}%`},suggestedMax:25}});
+
+// ============ ESTOQUE ============
+doughnut('e_cat',['Roteadores','ONUs','Infraestrutura','Cabos','Acessórios'],[32977,25932,26183,19740,13089],['#f97316','#3b82f6','#a855f7','#22c55e','#fbbf24']);
+
+const entradas=[38200,42100,39800,45600,41200,43500,47800,52300,44100,61200,49800,46700];
+const saidas  =[35100,39400,41200,43800,38900,40200,44600,50100,41800,58900,47200,44300];
+new Chart(document.getElementById('e_mov'),{type:'bar',data:{labels:m12cap,datasets:[
+  {label:'Entradas',data:entradas,backgroundColor:'rgba(34,197,94,.7)',borderRadius:2},
+  {label:'Saídas',data:saidas,backgroundColor:'rgba(239,68,68,.65)',borderRadius:2},
+]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>bfmt(ctx.raw)}}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}});
+
+barChart('e_cob',
+  ['RTR-001','RTR-002','RTR-003','ONU-001','ONU-002','OLT-001','CAB-001','CAB-002','CTO-001','PST-001'],
+  [{label:'Cobertura (dias)',data:[58,46,45,54,58,90,70,70,67,90],
+    backgroundColor:['#22c55e','#22c55e','#ef4444','#22c55e','#22c55e','#fbbf24','#22c55e','#22c55e','#22c55e','#22c55e'],
+    borderRadius:3}],
+  {horiz:true, sx:{ticks:{callback:v=>`${v}d`}}}
+);
+
+const saldo=[];let s=95000;
+entradas.forEach((e,i)=>{s+=e;s-=saidas[i];saldo.push(s);});
+lineChart('e_saldo',m12cap,[{label:'Saldo em Estoque (R$)',data:saldo,borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.08)',borderWidth:2.5,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#06b6d4',pointBorderColor:'#0a0a0f',pointBorderWidth:2}],{y:{ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}});
+
+</script>
+<style>
+:root{--bg:#0a0a0f;--card:#111118;--card2:#16161f;--border:#2a2a38;--border2:#1e1e2a;
+  --orange:#f97316;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--amber:#fbbf24;--purple:#a855f7;--cyan:#06b6d4;
+  --text:#e8e8f0;--muted:#6b6b80;--muted2:#4a4a5a;
+  --Fd:'Bebas Neue',sans-serif;--Fb:'DM Sans',sans-serif;--Fm:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--Fb);font-size:14px;line-height:1.6;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;opacity:.4;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E")}
+/* NAV */
+.nav{position:sticky;top:0;z-index:200;background:#07070c;border-bottom:1px solid var(--border);display:flex;align-items:stretch}
+.nav-brand{font-family:var(--Fd);font-size:21px;color:var(--orange);padding:12px 24px;border-right:1px solid var(--border);display:flex;align-items:center;letter-spacing:.06em;white-space:nowrap}
+.nav-tabs{display:flex;flex:1;overflow-x:auto}
+.nav-tab{padding:13px 20px;font-family:var(--Fm);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);cursor:pointer;border-right:1px solid var(--border2);border-bottom:3px solid transparent;white-space:nowrap;transition:all .18s;display:flex;align-items:center;gap:7px}
+.nav-tab:hover{color:var(--text);background:rgba(255,255,255,.02)}
+.nav-tab.active{color:var(--text);border-bottom-color:var(--orange)}
+.nav-tab.active.G{border-bottom-color:var(--green)}.nav-tab.active.B{border-bottom-color:var(--blue)}.nav-tab.active.P{border-bottom-color:var(--purple)}.nav-tab.active.C{border-bottom-color:var(--cyan)}
+.nbadge{font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(249,115,22,.15);color:var(--orange)}
+.nbadge.G{background:rgba(34,197,94,.15);color:var(--green)}.nbadge.B{background:rgba(59,130,246,.15);color:var(--blue)}.nbadge.P{background:rgba(168,85,247,.15);color:var(--purple)}.nbadge.C{background:rgba(6,182,212,.15);color:var(--cyan)}
+/* TICKER */
+.ticker{background:#09090e;border-bottom:1px solid var(--border);padding:8px 0;overflow:hidden}
+.ticker-inner{display:flex;white-space:nowrap;animation:ticker 55s linear infinite}
+.ti{display:inline-flex;align-items:center;gap:7px;padding:0 32px;font-family:var(--Fm);font-size:11px;color:var(--muted);border-right:1px solid var(--border2)}
+.tl{font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.up{color:var(--green);font-weight:700}.dn{color:var(--red);font-weight:700}.nt{color:var(--text);font-weight:700}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+/* PANELS */
+.panel{display:none;position:relative;z-index:1}.panel.active{display:block}
+.wrap{max-width:1520px;margin:0 auto;padding:0 26px}
+section{padding:52px 0}
+/* HERO */
+.hero{padding:52px 0 40px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;top:-250px;right:-150px;width:650px;height:650px;border-radius:50%;pointer-events:none}
+.hero-o::after{background:radial-gradient(circle,rgba(249,115,22,.055) 0%,transparent 65%)}
+.hero-g::after{background:radial-gradient(circle,rgba(34,197,94,.055) 0%,transparent 65%)}
+.hero-b::after{background:radial-gradient(circle,rgba(59,130,246,.055) 0%,transparent 65%)}
+.hero-p::after{background:radial-gradient(circle,rgba(168,85,247,.055) 0%,transparent 65%)}
+.hero-c::after{background:radial-gradient(circle,rgba(6,182,212,.055) 0%,transparent 65%)}
+.ey{font-family:var(--Fm);font-size:10px;text-transform:uppercase;letter-spacing:.2em;margin-bottom:10px;display:flex;align-items:center;gap:9px}
+.ey::before{content:'';width:24px;height:2px;display:inline-block}
+.ey-o{color:var(--orange)}.ey-o::before{background:var(--orange)}
+.ey-g{color:var(--green)}.ey-g::before{background:var(--green)}
+.ey-b{color:var(--blue)}.ey-b::before{background:var(--blue)}
+.ey-p{color:var(--purple)}.ey-p::before{background:var(--purple)}
+.ey-c{color:var(--cyan)}.ey-c::before{background:var(--cyan)}
+.htitle{font-family:var(--Fd);font-size:clamp(56px,7.5vw,110px);line-height:.9;letter-spacing:.02em;margin-bottom:6px}
+.hw{font-family:var(--Fm);font-size:11px;color:var(--muted);margin-bottom:36px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.wbadge{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);color:var(--amber);padding:3px 9px;border-radius:3px;font-size:9px;text-transform:uppercase;letter-spacing:.1em}
+/* KPI CARDS */
+.kg{display:grid;gap:12px;margin-bottom:24px}
+.kg5{grid-template-columns:repeat(5,1fr)}.kg4{grid-template-columns:repeat(4,1fr)}.kg3{grid-template-columns:repeat(3,1fr)}.kg2{grid-template-columns:1fr 1fr}
+.kc{background:var(--card);border:1px solid var(--border);border-top:3px solid var(--orange);padding:20px 16px 16px;border-radius:2px;position:relative;overflow:hidden;animation:fadeUp .5s ease both}
+.kc::after{content:'';position:absolute;bottom:-14px;right:-14px;width:60px;height:60px;border-radius:50%;pointer-events:none}
+.kc-o{border-top-color:var(--orange)}.kc-o::after{background:radial-gradient(circle,rgba(249,115,22,.13) 0%,transparent 70%)}
+.kc-g{border-top-color:var(--green)}.kc-g::after{background:radial-gradient(circle,rgba(34,197,94,.13) 0%,transparent 70%)}
+.kc-b{border-top-color:var(--blue)}.kc-b::after{background:radial-gradient(circle,rgba(59,130,246,.13) 0%,transparent 70%)}
+.kc-a{border-top-color:var(--amber)}.kc-a::after{background:radial-gradient(circle,rgba(251,191,36,.13) 0%,transparent 70%)}
+.kc-r{border-top-color:var(--red)}.kc-r::after{background:radial-gradient(circle,rgba(239,68,68,.13) 0%,transparent 70%)}
+.kc-p{border-top-color:var(--purple)}.kc-p::after{background:radial-gradient(circle,rgba(168,85,247,.13) 0%,transparent 70%)}
+.kc-c{border-top-color:var(--cyan)}.kc-c::after{background:radial-gradient(circle,rgba(6,182,212,.13) 0%,transparent 70%)}
+.kl{font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:7px}
+.kv{font-family:var(--Fd);font-size:40px;line-height:1;margin-bottom:5px}
+.kd{font-family:var(--Fm);font-size:10px;font-weight:700;margin-bottom:2px}
+.kd-up{color:var(--green)}.kd-dn{color:var(--red)}.kd-am{color:var(--amber)}.kd-bl{color:var(--blue)}.kd-mu{color:var(--muted)}
+.ks{font-size:10px;color:var(--muted)}
+/* CHART CARDS */
+.cc{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:22px;margin-bottom:12px;animation:fadeUp .5s ease both}
+.cct{font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px}
+.cct strong{color:var(--text);font-size:12px;font-family:var(--Fb)}
+canvas{max-height:250px}
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:12px}
+.g32{display:grid;grid-template-columns:3fr 2fr;gap:12px}
+.g23{display:grid;grid-template-columns:2fr 3fr;gap:12px}
+/* ALERT CARDS */
+.ag{display:grid;gap:12px;margin-bottom:24px}
+.ag4{grid-template-columns:repeat(4,1fr)}.ag3{grid-template-columns:repeat(3,1fr)}
+.ac{border-radius:2px;padding:16px;animation:fadeUp .5s ease both;border-left:3px solid}
+.ac-r{background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(249,115,22,.04));border-color:rgba(239,68,68,.2);border-left-color:var(--red)}
+.ac-o{background:linear-gradient(135deg,rgba(249,115,22,.08),rgba(251,191,36,.04));border-color:rgba(249,115,22,.2);border-left-color:var(--orange)}
+.ac-a{background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(249,115,22,.04));border-color:rgba(251,191,36,.2);border-left-color:var(--amber)}
+.ac-g{background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(6,182,212,.04));border-color:rgba(34,197,94,.2);border-left-color:var(--green)}
+.ac-b{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.04));border-color:rgba(59,130,246,.2);border-left-color:var(--blue)}
+.ac-p{background:linear-gradient(135deg,rgba(168,85,247,.08),rgba(59,130,246,.04));border-color:rgba(168,85,247,.2);border-left-color:var(--purple)}
+.al{font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px}
+.av{font-family:var(--Fd);font-size:32px;line-height:1;margin-bottom:2px}
+.as_{font-size:10px;color:var(--muted)}
+/* RANK LIST */
+.rl{display:flex;flex-direction:column;gap:8px}
+.ri{display:grid;grid-template-columns:24px 1fr 68px;align-items:center;gap:9px}
+.rn{font-family:var(--Fd);font-size:18px;color:var(--muted2);text-align:right;line-height:1}
+.rname{font-size:11px;color:var(--text);margin-bottom:3px;font-weight:500}
+.rbar{height:5px;background:var(--border2);border-radius:3px;overflow:hidden}
+.rbf{height:100%;border-radius:3px}
+.rval{font-family:var(--Fm);font-size:10px;font-weight:700;text-align:right}
+/* PROJ */
+.pg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.pc{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:22px;text-align:center;animation:fadeUp .5s ease both;position:relative;overflow:hidden}
+.pc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--orange),var(--amber))}
+.pl_{font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:9px}
+.ph{font-family:var(--Fd);font-size:44px;line-height:1;background:linear-gradient(135deg,var(--orange),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:5px}
+.ph-g{background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.ph-b{background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.ps_{font-size:10px;color:var(--muted)}
+/* INSIGHT */
+.ic{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:20px}
+.ii{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--border2)}
+.ii:last-child{border-bottom:none}
+.idot{width:6px;height:6px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.idot-o{background:var(--orange)}.idot-g{background:var(--green)}.idot-r{background:var(--red)}.idot-a{background:var(--amber)}.idot-b{background:var(--blue)}
+.it{font-size:11px;color:var(--muted);line-height:1.6}
+.it strong{color:var(--text)}
+/* COHORT */
+.ctbl{width:100%;border-collapse:collapse}
+.ctbl th{font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;padding:6px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.ctbl td{padding:9px 12px;border-bottom:1px solid var(--border2)}
+.cyr{font-family:var(--Fd);font-size:20px;color:var(--muted)}
+.cbar{height:7px;background:var(--border2);border-radius:4px;overflow:hidden}
+.cbf{height:100%;border-radius:4px}
+.cpct{font-family:var(--Fd);font-size:22px;min-width:65px;text-align:right}
+/* DIVIDER */
+.div{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
+/* SECTION TITLE */
+.st{font-family:var(--Fd);font-size:clamp(26px,3vw,42px);line-height:1;margin-bottom:28px;letter-spacing:.03em}
+.st .acc{color:var(--orange)}
+/* SCENARIO */
+.scg{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}
+.sc{background:var(--card2);border:1px solid var(--border2);border-radius:2px;padding:13px;text-align:center}
+.scl{font-family:var(--Fm);font-size:9px;color:var(--muted);margin-bottom:4px;text-transform:uppercase}
+.scv{font-family:var(--Fd);font-size:26px}
+.scv-l{color:var(--amber)}.scv-m{color:var(--orange)}.scv-h{color:var(--green)}
+.scs{font-size:10px;color:var(--muted);margin-top:2px}
+/* BANNER */
+.bn{border-radius:2px;padding:16px 20px;display:flex;align-items:center;gap:16px;margin-top:12px}
+.bn-r{background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(249,115,22,.06));border:1px solid rgba(239,68,68,.25)}
+.bn-a{background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(249,115,22,.06));border:1px solid rgba(251,191,36,.25)}
+.bn-g{background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(6,182,212,.05));border:1px solid rgba(34,197,94,.2)}
+.bn-b{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.05));border:1px solid rgba(59,130,246,.2)}
+.bn-title{font-family:var(--Fd);font-size:18px;margin-bottom:2px}
+.bn-text{font-size:11px;color:var(--muted);line-height:1.5}
+/* TABLE */
+.tw{overflow-x:auto}
+table.dt{width:100%;border-collapse:collapse;font-size:11px}
+table.dt th{font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+table.dt td{padding:8px 12px;border-bottom:1px solid var(--border2);color:var(--muted)}
+table.dt td:first-child{color:var(--text);font-weight:500}
+table.dt tr:hover td{background:rgba(255,255,255,.01)}
+.pill{display:inline-block;font-family:var(--Fm);font-size:8px;padding:1px 6px;border-radius:3px;font-weight:700;text-transform:uppercase}
+.pill-g{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.pill-r{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.pill-o{background:rgba(249,115,22,.12);color:var(--orange);border:1px solid rgba(249,115,22,.2)}
+.pill-a{background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.2)}
+.pill-b{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+.pill-p{background:rgba(168,85,247,.12);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
+/* COMISSÃO PANEL */
+.com-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.com-card{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:18px 14px;text-align:center;position:relative;overflow:hidden;animation:fadeUp .5s ease both}
+.com-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.com-card.ok::before{background:var(--green)}.com-card.warn::before{background:var(--amber)}.com-card.bad::before{background:var(--red)}.com-card.neu::before{background:var(--blue)}
+.com-label{font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.com-val{font-family:var(--Fd);font-size:36px;line-height:1;margin-bottom:5px}
+.com-meta{font-size:10px;color:var(--muted);margin-bottom:5px}
+.com-status{font-family:var(--Fm);font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block}
+.com-status.ok{background:rgba(34,197,94,.12);color:var(--green)}.com-status.warn{background:rgba(251,191,36,.12);color:var(--amber)}.com-status.bad{background:rgba(239,68,68,.12);color:var(--red)}.com-status.neu{background:rgba(59,130,246,.12);color:var(--blue)}
+.gate-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.gate-card{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:16px}
+.gate-title{font-family:var(--Fd);font-size:18px;margin-bottom:10px}
+.gate-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border2);font-size:11px}
+.gate-item:last-child{border-bottom:none}
+.gate-name{color:var(--muted)}
+.gate-val{font-family:var(--Fm);font-size:11px;font-weight:700}
+/* NOTE BOX */
+.note{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-left:3px solid var(--amber);border-radius:2px;padding:12px 16px;font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px}
+.note strong{color:var(--amber)}
+/* FOOTER */
+.footer{background:#060609;border-top:1px solid var(--border);padding:28px 0}
+.fi{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.fbrand{font-family:var(--Fd);font-size:26px;color:var(--orange)}
+.fstats{display:flex;gap:32px;flex-wrap:wrap}
+.fv{font-family:var(--Fd);font-size:22px;color:var(--text)}
+.fl{font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.fnote{font-size:10px;color:var(--muted2);font-family:var(--Fm)}
+/* MISC */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.mt{margin-top:12px}.mt2{margin-top:24px}.mt3{margin-top:40px}
+.mono{font-family:var(--Fm)}
+.tcs-wrap{display:flex;gap:16px;margin-top:12px}
+.tcs{flex:1;background:var(--card2);border:1px solid var(--border2);border-radius:2px;padding:13px;text-align:center}
+.tcs-l{font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.tcs-v{font-family:var(--Fd);font-size:30px}
+.tcs-s{font-size:10px;color:var(--muted);margin-top:2px}
+@media(max-width:1200px){.kg5,.kg4,.com-grid{grid-template-columns:repeat(3,1fr)}.ag4,.pg{grid-template-columns:repeat(2,1fr)}.g3,.g4{grid-template-columns:1fr 1fr}.g32,.g21,.g12,.g23{grid-template-columns:1fr}.gate-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){.wrap{padding:0 12px}.kg5,.kg4,.kg3,.kg2,.com-grid{grid-template-columns:1fr 1fr}.g2,.g3{grid-template-columns:1fr}.fi{flex-direction:column}}
+
+.kc-cyan{border-top-color:var(--cyan)}.kc-cyan::after{background:radial-gradient(circle,rgba(6,182,212,.13) 0%,transparent 70%)}
+.dre-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border2);font-size:12px}
+.dre-row:last-child{border-bottom:none}
+.dre-label{color:var(--muted)}
+.dre-val{font-family:var(--Fm);font-weight:700}
+.dre-total{background:rgba(255,255,255,.02);border-top:2px solid var(--border)!important}
+.dre-ebitda{background:linear-gradient(135deg,rgba(34,197,94,.07),transparent);border-top:2px solid rgba(34,197,94,.3)!important}
+.prog-wrap{display:flex;flex-direction:column;gap:8px}
+.prog-item{display:flex;align-items:center;gap:10px;font-size:11px}
+.prog-label{width:160px;flex-shrink:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prog-bar{flex:1;height:7px;background:var(--border2);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width .4s ease}
+.prog-val{width:70px;text-align:right;font-family:var(--Fm);font-size:10px;font-weight:700;flex-shrink:0}
+.est-badge{display:inline-block;font-family:var(--Fm);font-size:8px;padding:2px 7px;border-radius:3px;font-weight:700;text-transform:uppercase}
+.est-ok{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.est-alerta{background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.25)}
+.est-critico{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-brand">FibraLink</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="sw('geral',this)">🏢 Geral <span class="nbadge">Saúde</span></div>
+    <div class="nav-tab" onclick="sw('comercial',this,'G')">📈 Comercial <span class="nbadge G">Vendas</span></div>
+    <div class="nav-tab" onclick="sw('financeiro',this,'B')">💰 Financeiro <span class="nbadge B">Inadimp.</span></div>
+    <div class="nav-tab" onclick="sw('atendimento',this,'P')">🎧 Atendimento <span class="nbadge P">360°</span></div>
+    <div class="nav-tab" onclick="sw('comissao',this,'C')">⭐ Comissionamento <span class="nbadge C">KPIs</span></div>
+    <div class="nav-tab" onclick="sw('financeiro2',this,'A')">💳 Contas a Pagar <span class="nbadge A" style="background:rgba(239,68,68,.15);color:#ef4444">DRE</span></div>
+    <div class="nav-tab" onclick="sw('estoque',this,'E')">📦 Estoque <span class="nbadge E" style="background:rgba(6,182,212,.15);color:#06b6d4">Inventário</span></div>
+  </div>
+</nav>
+<div class="ticker"><div class="ticker-inner" id="tkr"></div></div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAINEL GERAL
+═══════════════════════════════════════════════════ -->
+<div class="panel active" id="panel-geral">
+<section class="hero hero-o">
+  <div class="wrap">
+    <div class="ey ey-o">FibraLink Telecom · Visão Gerencial · 11.843 cadastros reais</div>
+    <div class="htitle">SAÚDE DA<br><span style="color:var(--orange)">EMPRESA</span></div>
+    <div class="hw"><span class="wbadge">Janela</span><strong style="color:var(--amber)">Jan/2025 — Fev/2026</strong><span style="font-size:10px;color:var(--muted)">Base extraída diretamente de BASE_DADOS_BI.xlsx</span></div>
+    <div class="kg kg5">
+      <div class="kc kc-o"><div class="kl">Clientes Ativos</div><div class="kv">6.971</div><div class="kd kd-up">▲ +1.903 saldo 12m</div><div class="ks">Serviço Habilitado</div></div>
+      <div class="kc kc-g" style="animation-delay:.07s"><div class="kl">Receita Ativa/Mês</div><div class="kv">R$823K</div><div class="kd kd-up">▲ Fev/26 real</div><div class="ks">8.312 × R$109,42</div></div>
+      <div class="kc kc-b" style="animation-delay:.14s"><div class="kl">Saldo Líquido 12m</div><div class="kv">+1.903</div><div class="kd kd-up">▲ +136/mês média</div><div class="ks">Instalações − Churns</div></div>
+      <div class="kc kc-a" style="animation-delay:.21s"><div class="kl">Receita em Risco</div><div class="kv">R$98K</div><div class="kd kd-dn">▼ 1.024 suspensos</div><div class="ks">12,0% da receita ativa</div></div>
+      <div class="kc kc-r" style="animation-delay:.28s"><div class="kl">Churn Rate (12m)</div><div class="kv">3,1%</div><div class="kd kd-up">▲ Tendência queda</div><div class="ks">807 cancelamentos</div></div>
+    </div>
+  </div>
+</section>
+<div class="div"></div>
+<section>
+<div class="wrap">
+  <div class="st">Crescimento &amp; <span class="acc">Base</span></div>
+  <div class="g32">
+    <div>
+      <div class="cc"><div class="cct"><strong>Instalações vs Cancelamentos</strong><span>Barra + Linha saldo</span></div><canvas id="g_ic"></canvas></div>
+      <div class="cc mt"><div class="cct"><strong>Receita Mensal Estimada</strong><span>Base real × ticket médio</span></div><canvas id="g_rec"></canvas></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="cc"><div class="cct"><strong>Cohort de Retenção — por Ano</strong></div><table class="ctbl" id="cohortTbl"></table></div>
+      <div class="ic">
+        <div class="cct" style="margin-bottom:9px"><strong>Insights Gerenciais</strong></div>
+        <div class="ii"><div class="idot idot-g"></div><div class="it"><strong>Crescimento acelerado:</strong> Saldo líquido acima de +200 em 3 dos últimos 4 meses. Dez/25 recorde: 280 instalações.</div></div>
+        <div class="ii"><div class="idot idot-o"></div><div class="it"><strong>Retenção 2025: 76,2%</strong> — melhora de +26,7pp vs 2021. Cada coorte supera o anterior.</div></div>
+        <div class="ii"><div class="idot idot-a"></div><div class="it"><strong>12% da receita suspensa:</strong> R$98K/mês em 1.024 contratos. Recuperação de 40% = +R$36,9K/mês.</div></div>
+        <div class="ii"><div class="idot idot-r"></div><div class="it"><strong>Cravinhos lidera em suspensão:</strong> Centro de Cravinhos tem 25,9% de suspensos — maior risco territorial.</div></div>
+        <div class="ii"><div class="idot idot-b"></div><div class="it"><strong>5 cidades além de RP</strong> com base ativa: Sertãozinho (600), Cravinhos (575), Serrana (493), Jardinópolis (382).</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="g3 mt2">
+    <div class="cc"><div class="cct"><strong>Distribuição de Status</strong></div><canvas id="g_status" style="max-height:210px"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Top Cidades — Base Ativa</strong></div>
+      <div class="rl mt" style="margin-top:4px">
+        <div class="ri"><div class="rn">1</div><div><div class="rname">Ribeirão Preto</div><div class="rbar"><div class="rbf" style="width:100%;background:var(--orange)"></div></div></div><div class="rval">3.929</div></div>
+        <div class="ri"><div class="rn">2</div><div><div class="rname">Sertãozinho</div><div class="rbar"><div class="rbf" style="width:15.3%;background:var(--blue)"></div></div></div><div class="rval" style="color:var(--blue)">600</div></div>
+        <div class="ri"><div class="rn">3</div><div><div class="rname">Cravinhos</div><div class="rbar"><div class="rbf" style="width:14.6%;background:var(--blue)"></div></div></div><div class="rval" style="color:var(--blue)">575</div></div>
+        <div class="ri"><div class="rn">4</div><div><div class="rname">Serrana</div><div class="rbar"><div class="rbf" style="width:12.6%;background:var(--green)"></div></div></div><div class="rval" style="color:var(--green)">493</div></div>
+        <div class="ri"><div class="rn">5</div><div><div class="rname">Jardinópolis</div><div class="rbar"><div class="rbf" style="width:9.7%;background:var(--green)"></div></div></div><div class="rval" style="color:var(--green)">382</div></div>
+      </div>
+    </div>
+    <div class="cc"><div class="cct"><strong>Faixa Etária — Clientes Ativos</strong></div><canvas id="g_idade" style="max-height:210px"></canvas></div>
+  </div>
+  <div class="st mt3">Projeção <span class="acc">2026</span></div>
+  <div class="pg">
+    <div class="pc"><div class="pl_">Receita Anual 2026</div><div class="ph">R$11,2M</div><div class="ps_">Projeção conservadora</div></div>
+    <div class="pc" style="animation-delay:.1s"><div class="pl_">Clientes Dez/26</div><div class="ph">~9.300</div><div class="ps_">+150/mês líquido</div></div>
+    <div class="pc" style="animation-delay:.2s"><div class="pl_">Receita Dez/26</div><div class="ph">R$1,07M</div><div class="ps_">Projeção mensal</div></div>
+    <div class="pc" style="animation-delay:.3s"><div class="pl_">Crescimento vs 2025</div><div class="ph">+37%</div><div class="ps_">Base anual estimada</div></div>
+  </div>
+  <div class="cc"><div class="cct"><strong>Base de Clientes — Histórico + Projeção 2026</strong><span>Linha tracejada = estimativa</span></div><canvas id="g_proj" style="max-height:260px"></canvas></div>
+</div>
+</section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAINEL COMERCIAL
+═══════════════════════════════════════════════════ -->
+<div class="panel" id="panel-comercial">
+<section class="hero hero-g">
+  <div class="wrap">
+    <div class="ey ey-g">FibraLink Telecom · Painel Comercial · BASE_CADASTRO + VENDEDORES_EXTERNOS</div>
+    <div class="htitle">ANÁLISE<br><span style="color:var(--green)">COMERCIAL</span></div>
+    <div class="hw"><span class="wbadge">Janela</span><strong style="color:var(--amber)">Jan/2025 — Fev/2026</strong><span style="font-size:10px;color:var(--muted)">2.974 instalações · 807 cancelamentos · 272 vendas externas</span></div>
+    <div class="kg kg4">
+      <div class="kc kc-g"><div class="kl">Instalações 12m</div><div class="kv">2.974</div><div class="kd kd-up">▲ Pico Dez/25: 280</div><div class="ks">Jan/25 → Fev/26</div></div>
+      <div class="kc kc-r" style="animation-delay:.07s"><div class="kl">Cancelamentos 12m</div><div class="kv">807</div><div class="kd kd-up">▲ Mín Fev/26: 31</div><div class="ks">Tendência de queda</div></div>
+      <div class="kc kc-b" style="animation-delay:.14s"><div class="kl">Ticket Médio Atual</div><div class="kv">R$109,42</div><div class="kd kd-up">▲ Pico Ago/25: R$116,62</div><div class="ks">Fev/26 real</div></div>
+      <div class="kc kc-a" style="animation-delay:.21s"><div class="kl">Receita Vendida Ext.</div><div class="kv">R$25,7K</div><div class="kd kd-up">▲ 272 contratos</div><div class="ks">Out/25 → Fev/26</div></div>
+    </div>
+  </div>
+</section>
+<div class="div"></div>
+<section><div class="wrap">
+  <div class="st">Volume de <span class="acc">Vendas</span></div>
+  <div class="g2">
+    <div class="cc"><div class="cct"><strong>Instalações vs Cancelamentos por Mês</strong></div><canvas id="c_ic"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Receita Gerada por Mês (Valor Vendido)</strong><span>Instalações × ticket médio do mês</span></div><canvas id="c_recvend"></canvas></div>
+  </div>
+  <div class="g2 mt">
+    <div class="cc"><div class="cct"><strong>Saldo Líquido Mensal</strong><span>Verde ≥200 · Laranja ≥100 · Âmbar resto</span></div><canvas id="c_saldo"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Evolução do Ticket Médio de Venda</strong><span>Por mês de habilitação — dados reais</span></div><canvas id="c_ticket"></canvas></div>
+  </div>
+  <div class="g21 mt">
+    <div class="cc"><div class="cct"><strong>Mix de Planos — Base Total</strong><span>Por valor do plano</span></div><canvas id="c_planos"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Motivos de Cancelamento</strong></div><canvas id="c_cancel" style="max-height:220px"></canvas>
+      <div class="note mt"><strong>Atenção:</strong> 2.050 cancelamentos sem motivo registrado (N/A = 61,5% do total). Classificação obrigatória no sistema aumentaria qualidade analítica significativamente.</div>
+    </div>
+  </div>
+
+  <div class="st mt3">Análise <span class="acc">Territorial</span> — Cidade · Bairro</div>
+  <div class="g2">
+    <div class="cc"><div class="cct"><strong>Top 12 — Volume de Instalações (Cidade · Bairro)</strong></div>
+      <div class="rl mt" style="margin-top:4px">
+        <div class="ri"><div class="rn">1</div><div><div class="rname">Cravinhos · Centro</div><div class="rbar"><div class="rbf" style="width:100%;background:var(--orange)"></div></div></div><div class="rval">647</div></div>
+        <div class="ri"><div class="rn">2</div><div><div class="rname">RP · Jardim Paulista</div><div class="rbar"><div class="rbf" style="width:76%;background:var(--blue)"></div></div></div><div class="rval" style="color:var(--blue)">492</div></div>
+        <div class="ri"><div class="rn">3</div><div><div class="rname">RP · Ipiranga</div><div class="rbar"><div class="rbf" style="width:70.9%;background:var(--blue)"></div></div></div><div class="rval" style="color:var(--blue)">459</div></div>
+        <div class="ri"><div class="rn">4</div><div><div class="rname">RP · Sumarezinho</div><div class="rbar"><div class="rbf" style="width:65.5%;background:var(--green)"></div></div></div><div class="rval" style="color:var(--green)">424</div></div>
+        <div class="ri"><div class="rn">5</div><div><div class="rname">RP · Campos Elíseos</div><div class="rbar"><div class="rbf" style="width:65.2%;background:var(--green)"></div></div></div><div class="rval" style="color:var(--green)">422</div></div>
+        <div class="ri"><div class="rn">6</div><div><div class="rname">Jardinópolis · Centro</div><div class="rbar"><div class="rbf" style="width:59.7%;background:var(--amber)"></div></div></div><div class="rval" style="color:var(--amber)">386</div></div>
+        <div class="ri"><div class="rn">7</div><div><div class="rname">RP · Alto da Boa Vista</div><div class="rbar"><div class="rbf" style="width:57%;background:var(--amber)"></div></div></div><div class="rval" style="color:var(--amber)">369</div></div>
+        <div class="ri"><div class="rn">8</div><div><div class="rname">RP · Vila Tibério</div><div class="rbar"><div class="rbf" style="width:51.5%;background:var(--amber)"></div></div></div><div class="rval" style="color:var(--amber)">333</div></div>
+        <div class="ri"><div class="rn">9</div><div><div class="rname">RP · Jardim Independência</div><div class="rbar"><div class="rbf" style="width:48.2%;background:var(--amber)"></div></div></div><div class="rval" style="color:var(--amber)">312</div></div>
+        <div class="ri"><div class="rn">10</div><div><div class="rname">RP · Ribeirânia</div><div class="rbar"><div class="rbf" style="width:47.6%;background:var(--red)"></div></div></div><div class="rval" style="color:var(--red)">308</div></div>
+        <div class="ri"><div class="rn">11</div><div><div class="rname">Sertãozinho · Centro</div><div class="rbar"><div class="rbf" style="width:26.4%;background:var(--purple)"></div></div></div><div class="rval" style="color:var(--purple)">171</div></div>
+        <div class="ri"><div class="rn">12</div><div><div class="rname">Cravinhos · Dist. Industrial</div><div class="rbar"><div class="rbf" style="width:26.7%;background:var(--cyan)"></div></div></div><div class="rval" style="color:var(--cyan)">173</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="cc"><div class="cct"><strong>Top 10 — Receita Mensal Ativa (Cidade · Bairro)</strong></div><canvas id="c_rec_bairro"></canvas></div>
+      <div class="cc mt"><div class="cct"><strong>Taxa de Suspensão por Cidade · Bairro</strong><span>% suspensos do total</span></div><canvas id="c_susp_bairro" style="max-height:190px"></canvas></div>
+    </div>
+  </div>
+
+  <div class="st mt3">Vendedores <span class="acc">Externos</span></div>
+  <div class="g3">
+    <div class="cc" style="grid-column:span 2">
+      <div class="cct"><strong>Desempenho por Vendedor Externo</strong><span>Vendas + Valor + Ticket + Comissão</span></div>
+      <div class="tw">
+        <table class="dt">
+          <thead><tr><th>Vendedor</th><th>Vendas</th><th>% Participação</th><th>Valor Total</th><th>Ticket Médio</th><th>Comissão (20%)</th><th>Ticket Marcelo Ref.</th></tr></thead>
+          <tbody>
+            <tr><td>Juliana</td><td><strong style="color:var(--orange)">228</strong></td><td><span class="pill pill-o">83,8%</span></td><td>R$ 21.198,30</td><td style="color:var(--amber)">R$ 92,98</td><td style="color:var(--green)">R$ 4.239,66</td><td>—</td></tr>
+            <tr><td>Marcelo</td><td><strong style="color:var(--blue)">44</strong></td><td><span class="pill pill-b">16,2%</span></td><td>R$ 4.515,60</td><td style="color:var(--green)">R$ 102,63</td><td style="color:var(--green)">R$ 903,12</td><td>Referência (+10,4%)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note mt"><strong>📊 Análise Juliana:</strong> Representa 83,8% das vendas externas, porém com ticket médio de R$97,35 — <strong>R$9,65 abaixo</strong> de Marcelo (R$112,40). Revisar plano de comissão para bonificar ticket acima de R$100: ex. comissão base 20% + 5% bonus para vendas ≥ R$100. Isso incentivaria upgrade de plano e aumentaria receita recorrente.</div>
+      <div class="cc mt" style="padding:14px"><div class="cct" style="margin-bottom:12px"><strong>Vendas por Mês — Juliana vs Marcelo</strong></div><canvas id="c_vend_mes" style="max-height:180px"></canvas></div>
+    </div>
+    <div>
+      <div class="cc"><div class="cct"><strong>Mix Planos Externos</strong></div><canvas id="c_planos_ext" style="max-height:180px"></canvas></div>
+      <div class="cc mt"><div class="cct"><strong>Valor Vendido por Mês</strong></div><canvas id="c_vend_val" style="max-height:160px"></canvas></div>
+    </div>
+  </div>
+
+  <div class="st mt3">Plano de <span class="acc">Recuperação</span> de Base Perdida</div>
+  <div class="ag ag3">
+    <div class="ac ac-a"><div class="al">Cancelados Recuperáveis</div><div class="av" style="color:var(--amber)">517</div><div class="as_">Inadimplência (491) + Insatisfação (4) + Provedor (22)</div></div>
+    <div class="ac ac-o"><div class="al">Receita Potencial/Mês</div><div class="av" style="color:var(--orange)">R$52K</div><div class="as_">517 × R$101 ticket médio</div></div>
+    <div class="ac ac-g"><div class="al">Prazo Médio Inativos</div><div class="av" style="color:var(--green)">13,8m</div><div class="as_">Tempo médio inativos por inadimplência</div></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cct"><strong>Receita Perdida por Cancelamento — Mensal</strong><span>Valor do plano × cancelamentos</span></div><canvas id="c_rec_perdida"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Cenários de Recuperação de Cancelados</strong></div>
+      <div class="scg">
+        <div class="sc"><div class="scl">Reativar 15%</div><div class="scv scv-l">78</div><div class="scs">R$7.876/mês adicional</div></div>
+        <div class="sc"><div class="scl">Reativar 30%</div><div class="scv scv-m">155</div><div class="scs">R$15.655/mês adicional</div></div>
+        <div class="sc"><div class="scl">Reativar 50%</div><div class="scv scv-h">259</div><div class="scs">R$26.159/mês adicional</div></div>
+      </div>
+      <div class="note mt"><strong>Estratégia:</strong> Priorizar os 491 cancelados por inadimplência com &lt;6 meses de inatividade — maior propensão de retorno. Oferta de plano entrada (R$79,90) com renegociação de débito em 2× pode aumentar a taxa de reativação.</div>
+      <div class="cc mt" style="padding:14px"><div class="cct" style="margin-bottom:10px"><strong>Projeção Receita — Histórico + Projeção com Recuperação</strong></div><canvas id="c_proj_rec" style="max-height:170px"></canvas></div>
+    </div>
+  </div>
+  <!-- PROJEÇÃO MIX COMERCIAL -->
+  <div class="st mt3">Potencial de um <span class="acc">Setor Comercial</span> Estruturado</div>
+
+  <div class="bn bn-b mt" style="margin-bottom:20px">
+    <div style="font-size:22px">📌</div>
+    <div>
+      <div class="bn-title" style="color:var(--blue)">MODELO MIX — INTERNO + EXTERNO</div>
+      <div class="bn-text">
+        O setor comercial ideal para a FibraLink combina dois perfis complementares:
+        <strong style="color:var(--orange)">Vendedor Interno</strong> — trabalha a base existente (reativação de suspensos, recuperação de cancelados, upgrade de plano e receptivo inbound) e
+        <strong style="color:var(--green)">Vendedor Externo</strong> — prospecção ativa em campo, novos bairros e indicações.
+        Benchmark real: 2 externos já entregam 54 vendas/mês (27/pessoa). Premissas baseadas nos dados reais da base.
+      </div>
+    </div>
+  </div>
+
+  <!-- DOIS PERFIS LADO A LADO -->
+  <div class="g2" style="margin-bottom:14px">
+
+    <!-- INTERNO -->
+    <div style="background:var(--card);border:1px solid rgba(249,115,22,.3);border-top:3px solid var(--orange);border-radius:2px;padding:22px">
+      <div style="font-family:var(--Fm);font-size:9px;color:var(--orange);text-transform:uppercase;letter-spacing:.15em;margin-bottom:6px">Vendedor Interno — 2 pessoas</div>
+      <div style="font-family:var(--Fd);font-size:28px;margin-bottom:16px">Trabalha a <span style="color:var(--orange)">Base Existente</span></div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+        <div style="background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.15);border-radius:2px;padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <span style="font-family:var(--Fm);font-size:9px;color:var(--orange);text-transform:uppercase">Reativação de Suspensos</span>
+            <span style="font-family:var(--Fd);font-size:22px;color:var(--orange)">R$14.097/mês</span>
+          </div>
+          <div style="font-size:10px;color:var(--muted)">1.024 suspensos · meta 15%/mês = 136 reativados · ticket R$109,42</div>
+        </div>
+        <div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.15);border-radius:2px;padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <span style="font-family:var(--Fm);font-size:9px;color:var(--amber);text-transform:uppercase">Recuperação de Cancelados</span>
+            <span style="font-family:var(--Fd);font-size:22px;color:var(--amber)">R$3.480/mês</span>
+          </div>
+          <div style="font-size:10px;color:var(--muted)">517 recuperáveis · 20% conv. em 3 meses = 34/mês · ticket R$107,84</div>
+        </div>
+        <div style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15);border-radius:2px;padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <span style="font-family:var(--Fm);font-size:9px;color:var(--blue);text-transform:uppercase">Upgrade de Plano</span>
+            <span style="font-family:var(--Fd);font-size:22px;color:var(--blue)">R$6.646/mês</span>
+          </div>
+          <div style="font-size:10px;color:var(--muted)">3% da base migra para plano superior (+R$30) = 222 upgrades/mês</div>
+        </div>
+        <div style="background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.15);border-radius:2px;padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <span style="font-family:var(--Fm);font-size:9px;color:var(--purple);text-transform:uppercase">Receptivo Inbound</span>
+            <span style="font-family:var(--Fd);font-size:22px;color:var(--purple)">R$8.402/mês</span>
+          </div>
+          <div style="font-size:10px;color:var(--muted)">5% dos 97K chats são leads → 20% conv. = 81 contratos/mês</div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+        <div><div style="font-family:var(--Fd);font-size:30px;color:var(--orange)">R$32,6K</div><div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase">Receita/mês</div></div>
+        <div><div style="font-family:var(--Fd);font-size:30px;color:var(--green)">R$31</div><div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase">CAC médio</div></div>
+        <div><div style="font-family:var(--Fd);font-size:30px;color:var(--green)">84,9×</div><div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase">LTV/CAC</div></div>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--muted)">Custo: R$7.678/mês (2× sal R$3.000 + bônus 5% reativação + CRM) · <strong style="color:var(--green)">Margem: R$24.947/mês</strong></div>
+    </div>
+
+    <!-- EXTERNO -->
+    <div style="background:var(--card);border:1px solid rgba(34,197,94,.3);border-top:3px solid var(--green);border-radius:2px;padding:22px">
+      <div style="font-family:var(--Fm);font-size:9px;color:var(--green);text-transform:uppercase;letter-spacing:.15em;margin-bottom:6px">Vendedor Externo — 4 pessoas</div>
+      <div style="font-family:var(--Fd);font-size:28px;margin-bottom:16px">Prospecção <span style="color:var(--green)">Ativa em Campo</span></div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+        <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15);border-radius:2px;padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <span style="font-family:var(--Fm);font-size:9px;color:var(--green);text-transform:uppercase">Vendas Novas em Campo</span>
+            <span style="font-family:var(--Fd);font-size:22px;color:var(--green)">128/mês</span>
+          </div>
+          <div style="font-size:10px;color:var(--muted)">4 vendedores × 32 vendas/mês (benchmark atual: 27/pessoa)</div>
+        </div>
+        <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15);border-radius:2px;padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <span style="font-family:var(--Fm);font-size:9px;color:var(--cyan);text-transform:uppercase">Novos Bairros / Expansão</span>
+            <span style="font-family:var(--Fd);font-size:22px;color:var(--cyan)">Territorial</span>
+          </div>
+          <div style="font-size:10px;color:var(--muted)">Regiões com baixa penetração e cidades adjacentes ainda não exploradas</div>
+        </div>
+        <div style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15);border-radius:2px;padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <span style="font-family:var(--Fm);font-size:9px;color:var(--blue);text-transform:uppercase">Programa de Indicação</span>
+            <span style="font-family:var(--Fd);font-size:22px;color:var(--blue)">98,8% ret.</span>
+          </div>
+          <div style="font-size:10px;color:var(--muted)">Canal com maior retenção da base — externo ativa e gerencia rede de indicadores</div>
+        </div>
+        <div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.15);border-radius:2px;padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <span style="font-family:var(--Fm);font-size:9px;color:var(--amber);text-transform:uppercase">Ticket Médio Meta</span>
+            <span style="font-family:var(--Fd);font-size:22px;color:var(--amber)">≥ R$109,42</span>
+          </div>
+          <div style="font-size:10px;color:var(--muted)">Marcelo já entrega R$112,40 — meta de padronizar e superar ticket médio da base</div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+        <div><div style="font-family:var(--Fd);font-size:30px;color:var(--green)">R$13,3K</div><div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase">Receita/mês</div></div>
+        <div><div style="font-family:var(--Fd);font-size:30px;color:var(--green)">R$99</div><div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase">CAC</div></div>
+        <div><div style="font-family:var(--Fd);font-size:30px;color:var(--green)">26,2×</div><div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase">LTV/CAC</div></div>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--muted)">Custo: R$12.662/mês (4× sal R$2.500 + comissão 8% + infra) · <strong style="color:var(--green)">Margem: R$615/mês</strong></div>
+    </div>
+  </div>
+
+  <!-- RESULTADO CONSOLIDADO MIX -->
+  <div style="background:linear-gradient(135deg,rgba(249,115,22,.1),rgba(34,197,94,.07));border:1px solid rgba(249,115,22,.3);border-radius:2px;padding:24px;margin-bottom:14px">
+    <div style="font-family:var(--Fm);font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.15em;margin-bottom:14px">Resultado Consolidado — Mix 2 Internos + 4 Externos</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px">
+      <div style="text-align:center">
+        <div style="font-family:var(--Fd);font-size:42px;line-height:1;color:var(--orange)">R$45,9K</div>
+        <div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:4px">Receita gerada/mês</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:var(--Fd);font-size:42px;line-height:1;color:var(--red)">R$20,3K</div>
+        <div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:4px">Custo total/mês</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:var(--Fd);font-size:42px;line-height:1;color:var(--green)">R$25,6K</div>
+        <div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:4px">Margem/mês</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:var(--Fd);font-size:42px;line-height:1;background:linear-gradient(135deg,var(--orange),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">+45,8%</div>
+        <div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:4px">Ganho receita (mês 12)</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:var(--Fd);font-size:42px;line-height:1;color:var(--green)">1.624%</div>
+        <div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:4px">ROI em 12 meses</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:11px">
+      <div style="background:rgba(0,0,0,.2);border-radius:2px;padding:11px"><span style="color:var(--muted)">Base projetada (mês 12)</span><br><strong style="font-family:var(--Fm)">10.764 clientes</strong> <span style="color:var(--green);font-size:10px">(+3.380 vs hoje)</span></div>
+      <div style="background:rgba(0,0,0,.2);border-radius:2px;padding:11px"><span style="color:var(--muted)">Receita projetada (mês 12)</span><br><strong style="font-family:var(--Fm)">R$1.116.569/mês</strong> <span style="color:var(--green);font-size:10px">(vs R$823.417 hoje)</span></div>
+      <div style="background:rgba(0,0,0,.2);border-radius:2px;padding:11px"><span style="color:var(--muted)">Custo anual do setor</span><br><strong style="font-family:var(--Fm)">R$244.085/ano</strong> <span style="color:var(--muted);font-size:10px">para gerar +R$350K/mês</span></div>
+    </div>
+  </div>
+
+  <!-- GRÁFICOS -->
+  <div class="g2 mt">
+    <div class="cc">
+      <div class="cct"><strong>Evolução da Base — Cenário Mix</strong><span>Mar/26 → Fev/27 · interno + externo combinados</span></div>
+      <canvas id="c_mix_base" style="max-height:230px"></canvas>
+    </div>
+    <div class="cc">
+      <div class="cct"><strong>Composição da Receita Gerada pelo Comercial</strong><span>Interno vs Externo por função</span></div>
+      <canvas id="c_mix_comp" style="max-height:230px"></canvas>
+    </div>
+  </div>
+
+  <div class="cc mt">
+    <div class="cct"><strong>Receita Acumulada vs Custo Acumulado — Ponto de Payback</strong><span>Cenário mix · equilíbrio no mês 1 (margem positiva desde o início)</span></div>
+    <canvas id="c_mix_pay" style="max-height:200px"></canvas>
+  </div>
+
+  <div class="bn bn-g mt">
+    <div style="font-size:22px">💡</div>
+    <div>
+      <div class="bn-title" style="color:var(--green)">POR QUE O INTERNO TEM ROI MUITO MAIOR?</div>
+      <div class="bn-text">
+        O vendedor interno trabalha uma base que <strong>já existe e já está aquecida</strong>. Reativar um suspenso custa R$0 em mídia — basta uma ligação qualificada. O CAC interno (R$31) é <strong>3× menor</strong> que o externo (R$99) porque não há custo de prospecção. O LTV/CAC de <strong>84,9×</strong> significa que cada R$1 investido no interno retorna R$84 em receita de vida útil. <strong>A maior oportunidade imediata da FibraLink está dentro da própria base.</strong>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="st mt3">Canal de <span class="acc">Aquisição</span> <span style="font-family:var(--Fm);font-size:12px;color:var(--muted);font-weight:400;margin-left:8px">Ago/25 → Mar/26 · Aba "Origem do Cliente"</span></div>
+
+  <div class="ag ag4">
+    <div class="ac ac-g"><div class="al">Vendedor Externo</div><div class="av" style="color:var(--green)">106</div><div class="as_">94,3% taxa de retenção</div></div>
+    <div class="ac ac-b"><div class="al">Indicação</div><div class="av" style="color:var(--blue)">83</div><div class="as_">98,8% taxa de retenção ⭐</div></div>
+    <div class="ac ac-a"><div class="al">Panfleto</div><div class="av" style="color:var(--amber)">29</div><div class="as_">96,6% taxa de retenção</div></div>
+    <div class="ac ac-p"><div class="al">Instagram / Social</div><div class="av" style="color:var(--purple)">14</div><div class="as_">100% taxa de retenção</div></div>
+  </div>
+
+  <div class="g2">
+    <div class="cc">
+      <div class="cct"><strong>Evolução Mensal por Canal de Aquisição</strong><span>Nov/25 → Mar/26 · meses com dado de origem</span></div>
+      <canvas id="c_canal_mes" style="max-height:240px"></canvas>
+    </div>
+    <div class="cc">
+      <div class="cct"><strong>Mix de Canais Identificados</strong><span>233 clientes com origem registrada</span></div>
+      <canvas id="c_canal_mix" style="max-height:240px"></canvas>
+    </div>
+  </div>
+
+  <div class="g2 mt">
+    <div class="cc">
+      <div class="cct"><strong>Taxa de Retenção por Canal</strong><span>% ativos sobre total captado</span></div>
+      <canvas id="c_canal_ret" style="max-height:220px"></canvas>
+    </div>
+    <div class="cc">
+      <div class="cct"><strong>Distribuição por Cidade — Canais Identificados</strong></div>
+      <canvas id="c_canal_cidade" style="max-height:220px"></canvas>
+    </div>
+  </div>
+
+  <div class="bn bn-a mt">
+    <div style="font-size:22px">💡</div>
+    <div>
+      <div class="bn-title" style="color:var(--amber)">RECOMENDAÇÕES — CANAL DE AQUISIÇÃO</div>
+      <div class="bn-text">
+        <strong style="color:var(--blue)">Indicação (98,8% retenção):</strong> Canal mais eficiente — clientes indicados quase não cancelam. Criar programa formal de indicação com bônus (desconto, crédito ou presente) para o indicador pode escalar esse canal sem custo de mídia.<br><br>
+        <strong style="color:var(--purple)">Instagram/Social (100% retenção):</strong> Pequeno volume mas retenção perfeita. Vale aumentar investimento orgânico e/ou pago, especialmente em cidades novas como Sertãozinho e Cravinhos.<br><br>
+        <strong style="color:var(--amber)">Panfleto (96,6% retenção):</strong> Canal físico com boa conversão. Dados de Fev/26 mostram alta de panfleto — monitorar ROI por região de distribuição.<br><br>
+        <strong style="color:var(--red)">Não Informado (95,6% dos registros):</strong> Principal gap analítico — 5.135 de 5.368 clientes sem origem registrada. Tornar o campo obrigatório no sistema é <strong>ação prioritária</strong> para viabilizar análise de CAC e ROI por canal.
+      </div>
+    </div>
+  </div>
+
+  <!-- CAIXA DE ALERTA — IMPORTÂNCIA DO CANAL -->
+  <div style="background:linear-gradient(135deg,rgba(239,68,68,.1) 0%,rgba(249,115,22,.07) 50%,rgba(251,191,36,.05) 100%);border:1px solid rgba(239,68,68,.35);border-left:4px solid var(--red);border-radius:2px;padding:28px 28px 24px;margin-top:16px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,.08) 0%,transparent 70%);pointer-events:none"></div>
+
+    <div style="display:flex;align-items:flex-start;gap:18px">
+      <div style="font-size:36px;flex-shrink:0;margin-top:2px">🚨</div>
+      <div style="flex:1">
+        <div style="font-family:var(--Fd);font-size:28px;color:var(--red);letter-spacing:.04em;margin-bottom:4px">AÇÃO URGENTE — REGISTRO DE ORIGEM</div>
+        <div style="font-family:var(--Fm);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.15em;margin-bottom:20px">Por que preencher o canal de aquisição é crítico para o negócio</div>
+
+        <!-- NÚMERO DESTAQUE -->
+        <div style="display:flex;align-items:center;gap:24px;margin-bottom:22px;flex-wrap:wrap">
+          <div style="text-align:center;padding:16px 24px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:2px">
+            <div style="font-family:var(--Fd);font-size:64px;line-height:1;color:var(--red)">95,6%</div>
+            <div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:4px">dos cadastros sem origem</div>
+          </div>
+          <div style="text-align:center;padding:16px 24px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:2px">
+            <div style="font-family:var(--Fd);font-size:64px;line-height:1;color:var(--orange)">5.135</div>
+            <div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:4px">clientes sem canal registrado</div>
+          </div>
+          <div style="flex:1;min-width:220px">
+            <div style="font-size:12px;color:var(--muted);line-height:1.8">
+              De <strong style="color:var(--text)">5.368 cadastros</strong> na base de origem, apenas <strong style="color:var(--green)">233 têm canal preenchido</strong>.<br>
+              Isso significa que <strong style="color:var(--red)">você está investindo em canais sem saber quais funcionam</strong> — e pagando comissões, produzindo panfletos e impulsionando redes sociais <strong style="color:var(--orange)">às cegas</strong>.
+            </div>
+          </div>
+        </div>
+
+        <!-- O QUE VOCÊ PERDE SEM ESSE DADO -->
+        <div style="font-family:var(--Fm);font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:.15em;margin-bottom:12px">O que você perde sem esse dado</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px">
+          <div style="background:rgba(0,0,0,.25);border:1px solid var(--border2);border-radius:2px;padding:14px">
+            <div style="font-size:18px;margin-bottom:6px">💸</div>
+            <div style="font-family:var(--Fm);font-size:10px;color:var(--orange);text-transform:uppercase;margin-bottom:5px">CAC Invisível</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.6">Impossível calcular o <strong style="color:var(--text)">Custo de Aquisição por Canal</strong>. Você pode estar pagando R$200 por cliente num canal e R$20 em outro — sem saber.</div>
+          </div>
+          <div style="background:rgba(0,0,0,.25);border:1px solid var(--border2);border-radius:2px;padding:14px">
+            <div style="font-size:18px;margin-bottom:6px">📉</div>
+            <div style="font-family:var(--Fm);font-size:10px;color:var(--orange);text-transform:uppercase;margin-bottom:5px">ROI Zero</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.6">Sem saber a origem, <strong style="color:var(--text)">nenhuma decisão de investimento em marketing</strong> pode ser tomada com base em dados. Todo recurso alocado é chute.</div>
+          </div>
+          <div style="background:rgba(0,0,0,.25);border:1px solid var(--border2);border-radius:2px;padding:14px">
+            <div style="font-size:18px;margin-bottom:6px">🎯</div>
+            <div style="font-family:var(--Fm);font-size:10px;color:var(--orange);text-transform:uppercase;margin-bottom:5px">Comissionamento Cego</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.6">Indicação tem <strong style="color:var(--text)">98,8% de retenção</strong> — o melhor canal. Mas sem rastrear quem indicou, <strong style="color:var(--text)">impossível recompensar e escalar</strong> esse canal.</div>
+          </div>
+          <div style="background:rgba(0,0,0,.25);border:1px solid var(--border2);border-radius:2px;padding:14px">
+            <div style="font-size:18px;margin-bottom:6px">📊</div>
+            <div style="font-family:var(--Fm);font-size:10px;color:var(--orange);text-transform:uppercase;margin-bottom:5px">LTV por Canal</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.6">Clientes de diferentes canais têm <strong style="color:var(--text)">tempos de vida e ticket diferentes</strong>. Sem origem, LTV médio mascara variações importantes.</div>
+          </div>
+          <div style="background:rgba(0,0,0,.25);border:1px solid var(--border2);border-radius:2px;padding:14px">
+            <div style="font-size:18px;margin-bottom:6px">🗺️</div>
+            <div style="font-family:var(--Fm);font-size:10px;color:var(--orange);text-transform:uppercase;margin-bottom:5px">Expansão Territorial</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.6">Para entrar em novas cidades, <strong style="color:var(--text)">saber qual canal funcionou em cada região</strong> é essencial para replicar o modelo certo.</div>
+          </div>
+          <div style="background:rgba(0,0,0,.25);border:1px solid var(--border2);border-radius:2px;padding:14px">
+            <div style="font-size:18px;margin-bottom:6px">⚙️</div>
+            <div style="font-family:var(--Fm);font-size:10px;color:var(--orange);text-transform:uppercase;margin-bottom:5px">Dado Retroativo</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.6"><strong style="color:var(--text)">Origem não preenchida não tem recuperação.</strong> Cada dia sem coletar é histórico perdido para sempre — não existe forma de reconstruir depois.</div>
+          </div>
+        </div>
+
+        <!-- AÇÃO IMEDIATA -->
+        <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.25);border-radius:2px;padding:16px;display:flex;gap:14px;align-items:flex-start">
+          <div style="font-size:22px;flex-shrink:0">✅</div>
+          <div>
+            <div style="font-family:var(--Fd);font-size:18px;color:var(--green);margin-bottom:6px">AÇÃO IMEDIATA RECOMENDADA</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.8">
+              <strong style="color:var(--text)">1. Tornar o campo "Origem do Cliente" obrigatório no sistema de cadastro</strong> — sem preenchimento, o cadastro não avança.<br>
+              <strong style="color:var(--text)">2. Definir lista fechada de opções:</strong> Indicação · Vendedor Externo · Instagram · Facebook · Panfleto · Presencial · Google · Outros.<br>
+              <strong style="color:var(--text)">3. Treinar toda a equipe</strong> que realiza cadastro a perguntar ativamente a origem no momento da venda.<br>
+              <strong style="color:var(--text)">4. Tentar recuperar dados recentes</strong> (últimos 30–60 dias) via contato com os clientes ou cruzamento com registros de vendedores externos.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ESPAÇO ROI / CAC — A PREENCHER -->
+  <div class="st mt3">ROI &amp; <span class="acc">CAC</span> por Canal <span style="font-family:var(--Fm);font-size:11px;color:var(--muted);margin-left:8px">— Em breve</span></div>
+  <div class="g4">
+    <div class="cc" style="border-style:dashed;border-color:var(--border2);opacity:.55">
+      <div class="cct"><strong>CAC — Vendedor Externo</strong></div>
+      <div style="text-align:center;padding:28px 0">
+        <div style="font-family:var(--Fd);font-size:48px;color:var(--muted2)">—</div>
+        <div style="font-family:var(--Fm);font-size:10px;color:var(--muted2);margin-top:6px;text-transform:uppercase;letter-spacing:.1em">Aguardando custo canal</div>
+      </div>
+    </div>
+    <div class="cc" style="border-style:dashed;border-color:var(--border2);opacity:.55">
+      <div class="cct"><strong>CAC — Indicação</strong></div>
+      <div style="text-align:center;padding:28px 0">
+        <div style="font-family:var(--Fd);font-size:48px;color:var(--muted2)">—</div>
+        <div style="font-family:var(--Fm);font-size:10px;color:var(--muted2);margin-top:6px;text-transform:uppercase;letter-spacing:.1em">Aguardando custo canal</div>
+      </div>
+    </div>
+    <div class="cc" style="border-style:dashed;border-color:var(--border2);opacity:.55">
+      <div class="cct"><strong>CAC — Panfleto / Presencial</strong></div>
+      <div style="text-align:center;padding:28px 0">
+        <div style="font-family:var(--Fd);font-size:48px;color:var(--muted2)">—</div>
+        <div style="font-family:var(--Fm);font-size:10px;color:var(--muted2);margin-top:6px;text-transform:uppercase;letter-spacing:.1em">Aguardando custo canal</div>
+      </div>
+    </div>
+    <div class="cc" style="border-style:dashed;border-color:var(--border2);opacity:.55">
+      <div class="cct"><strong>CAC — Instagram / Social</strong></div>
+      <div style="text-align:center;padding:28px 0">
+        <div style="font-family:var(--Fd);font-size:48px;color:var(--muted2)">—</div>
+        <div style="font-family:var(--Fm);font-size:10px;color:var(--muted2);margin-top:6px;text-transform:uppercase;letter-spacing:.1em">Aguardando custo canal</div>
+      </div>
+    </div>
+  </div>
+  <div class="note mt" style="opacity:.7">
+    <strong>Para calcular CAC e ROI</strong> informe: (1) custo mensal de cada canal (comissão paga, valor de mídia, custo de impressão etc.) e (2) ticket médio por canal se diferente da média geral (R$109,42). Com isso será possível calcular <strong>CAC = Custo Canal ÷ Clientes Captados</strong> e <strong>ROI = (LTV − CAC) ÷ CAC</strong> para cada origem.
+  </div>
+
+
+</div></section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAINEL FINANCEIRO
+═══════════════════════════════════════════════════ -->
+<div class="panel" id="panel-financeiro">
+<section class="hero hero-b">
+  <div class="wrap">
+    <div class="ey ey-b">FibraLink Telecom · Painel Financeiro · 79.214 registros INADIMPLÊNCIA reais</div>
+    <div class="htitle">ANÁLISE<br><span style="color:var(--blue)">FINANCEIRA</span></div>
+    <div class="hw"><span class="wbadge">Base</span><strong style="color:var(--amber)">Jun/2025 — Nov/2025</strong><span style="font-size:10px;color:var(--muted)">1.547 inadimplentes (saldo&gt;0) · R$158.220 em aberto · 98,0% adimplentes</span></div>
+    <div class="kg kg4">
+      <div class="kc kc-r"><div class="kl">Inadimplentes Reais</div><div class="kv">1.547</div><div class="kd kd-dn">▼ Saldo &gt; R$0</div><div class="ks">De 79.214 registros</div></div>
+      <div class="kc kc-a" style="animation-delay:.07s"><div class="kl">Saldo Total em Aberto</div><div class="kv">R$158,2K</div><div class="kd kd-dn">▼ Média R$106,39</div><div class="ks">Valor real a receber</div></div>
+      <div class="kc kc-g" style="animation-delay:.14s"><div class="kl">Taxa de Adimplência</div><div class="kv">98,0%</div><div class="kd kd-up">▲ 68.227 quitados</div><div class="ks">Saldo = R$0</div></div>
+      <div class="kc kc-b" style="animation-delay:.21s"><div class="kl">Aging Médio</div><div class="kv">171d</div><div class="kd kd-dn">▼ Crítico &gt;90 dias</div><div class="ks">790 casos acima de 90d</div></div>
+    </div>
+  </div>
+</section>
+<div class="div"></div>
+<section><div class="wrap">
+  <div class="st">Comportamento <span class="acc">Financeiro</span></div>
+  <div class="g2">
+    <div class="cc"><div class="cct"><strong>Adimplentes vs Inadimplentes — por Mês de Vencimento</strong><span>Contagem real da base INADIMPLÊNCIA</span></div><canvas id="f_comp"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Saldo Pago vs Saldo em Aberto (R$)</strong><span>Receita faturada por mês</span></div><canvas id="f_saldos"></canvas></div>
+  </div>
+  <div class="g2 mt">
+    <div class="cc"><div class="cct"><strong>Inadimplência por Mês de Vencimento</strong><span>Clientes + Saldo</span></div><canvas id="f_inad_mes"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Aging — Dias desde Vencimento</strong></div><canvas id="f_aging" style="max-height:210px"></canvas>
+      <div class="bn bn-r mt"><div style="font-size:24px">⚠️</div><div><div class="bn-title" style="color:var(--red)">AGING CRÍTICO</div><div class="bn-text">790 casos com +90 dias (57,2%). Probabilidade de recuperação cai drasticamente após 180 dias. <strong>Ação urgente no grupo 91–180 dias: 528 casos · R$58,9K.</strong></div></div></div>
+    </div>
+  </div>
+
+  <div class="st mt3">Análise por <span class="acc">Segmento</span></div>
+  <div class="g3">
+    <div class="cc"><div class="cct"><strong>Inadimplência por Plano</strong><span>Qtd + Saldo</span></div><canvas id="f_plano"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Top 10 — Saldo Inadimplente (Cidade · Bairro)</strong></div>
+      <div class="rl mt" style="margin-top:4px">
+        <div class="ri"><div class="rn">1</div><div><div class="rname">Cravinhos · Centro</div><div class="rbar"><div class="rbf" style="width:100%;background:var(--red)"></div></div></div><div class="rval" style="color:var(--red)">R$13,3K</div></div>
+        <div class="ri"><div class="rn">2</div><div><div class="rname">RP · Ipiranga</div><div class="rbar"><div class="rbf" style="width:65.7%;background:var(--orange)"></div></div></div><div class="rval" style="color:var(--orange)">R$8,8K</div></div>
+        <div class="ri"><div class="rn">3</div><div><div class="rname">RP · Sumarezinho</div><div class="rbar"><div class="rbf" style="width:61.1%;background:var(--orange)"></div></div></div><div class="rval" style="color:var(--orange)">R$8,1K</div></div>
+        <div class="ri"><div class="rn">4</div><div><div class="rname">RP · Campos Elíseos</div><div class="rbar"><div class="rbf" style="width:47.5%;background:var(--amber)"></div></div></div><div class="rval" style="color:var(--amber)">R$6,3K</div></div>
+        <div class="ri"><div class="rn">5</div><div><div class="rname">RP · Vila Tibério</div><div class="rbar"><div class="rbf" style="width:43.7%;background:var(--amber)"></div></div></div><div class="rval" style="color:var(--amber)">R$5,8K</div></div>
+        <div class="ri"><div class="rn">6</div><div><div class="rname">RP · Jardim Independência</div><div class="rbar"><div class="rbf" style="width:37.2%;background:var(--amber)"></div></div></div><div class="rval" style="color:var(--amber)">R$5,0K</div></div>
+        <div class="ri"><div class="rn">7</div><div><div class="rname">Cravinhos · Dist. Industrial</div><div class="rbar"><div class="rbf" style="width:31.7%;background:var(--blue)"></div></div></div><div class="rval" style="color:var(--blue)">R$4,2K</div></div>
+        <div class="ri"><div class="rn">8</div><div><div class="rname">RP · Jardim Zorzetto</div><div class="rbar"><div class="rbf" style="width:31.3%;background:var(--blue)"></div></div></div><div class="rval" style="color:var(--blue)">R$4,2K</div></div>
+        <div class="ri"><div class="rn">9</div><div><div class="rname">RP · Alto da Boa Vista</div><div class="rbar"><div class="rbf" style="width:29.1%;background:var(--blue)"></div></div></div><div class="rval" style="color:var(--blue)">R$3,9K</div></div>
+        <div class="ri"><div class="rn">10</div><div><div class="rname">Sertãozinho · Centro</div><div class="rbar"><div class="rbf" style="width:24.9%;background:var(--purple)"></div></div></div><div class="rval" style="color:var(--purple)">R$3,3K</div></div>
+      </div>
+    </div>
+    <div class="cc"><div class="cct"><strong>Faixas de Saldo</strong></div><canvas id="f_faixas" style="max-height:180px"></canvas>
+      <div class="tcs-wrap mt">
+        <div class="tcs"><div class="tcs-l">Receita Ativa</div><div class="tcs-v" style="color:var(--green)">R$823K</div><div class="tcs-s">8.312 habilitados · Fev/26</div></div>
+        <div class="tcs"><div class="tcs-l">Em Risco (Suspensos)</div><div class="tcs-v" style="color:var(--red)">R$98K</div><div class="tcs-s">1.024 suspensos</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="st mt3">Fluxo <span class="acc">Financeiro</span> + Projeção</div>
+  <div class="cc"><div class="cct"><strong>Receita Mensal — Histórico Real + Projeção 2026</strong><span>Base crescente × ticket médio · linha tracejada = projeção</span></div><canvas id="f_fluxo" style="max-height:270px"></canvas></div>
+  <div class="g2 mt">
+    <div class="cc"><div class="cct"><strong>Cenários de Recuperação</strong></div>
+      <div class="scg">
+        <div class="sc"><div class="scl">Recuperar 20%</div><div class="scv scv-l">276</div><div class="scs">R$29,4K arrecadados</div></div>
+        <div class="sc"><div class="scl">Recuperar 40%</div><div class="scv scv-m">552</div><div class="scs">R$58,7K arrecadados</div></div>
+        <div class="sc"><div class="scl">Recuperar 60%</div><div class="scv scv-h">828</div><div class="scs">R$88,1K arrecadados</div></div>
+      </div>
+      <div style="margin-top:10px;padding:11px;background:var(--card2);border:1px solid var(--border2);border-radius:2px">
+        <div class="mono" style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Potencial anual — cenário 40%</div>
+        <div style="font-family:var(--Fd);font-size:34px;color:var(--green)">R$704.400</div>
+        <div style="font-size:10px;color:var(--muted)">Saldo atual R$158,2K + reativação 552 suspensos</div>
+      </div>
+    </div>
+    <div class="cc"><div class="cct"><strong>Projeção Receita com Recuperação vs Sem</strong></div><canvas id="f_proj_comp" style="max-height:220px"></canvas></div>
+  </div>
+</div></section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAINEL ATENDIMENTO
+═══════════════════════════════════════════════════ -->
+<div class="panel" id="panel-atendimento">
+<section class="hero hero-p">
+  <div class="wrap">
+    <div class="ey ey-p">FibraLink Telecom · Atendimento 360° · Chat + Telefone + Ordens de Serviço</div>
+    <div class="htitle">ATENDIMENTO<br><span style="color:var(--purple)">360°</span></div>
+    <div class="hw"><span class="wbadge">Canais</span><strong style="color:var(--amber)">Chat · Telefone · OS</strong><span style="font-size:10px;color:var(--muted)">108.693 chats · 4.531 ligações · 5.914 OS</span></div>
+    <div class="kg kg4">
+      <div class="kc kc-p"><div class="kl">Total Interações</div><div class="kv">106K+</div><div class="kd kd-bl">● Todos os canais</div><div class="ks">Chat+Tel+OS</div></div>
+      <div class="kc kc-b" style="animation-delay:.07s"><div class="kl">TA Telefone Fev/26</div><div class="kv">98,1%</div><div class="kd kd-up">▲ Nov/25 era 61,9%</div><div class="ks">TMA: 46s · TME: 59s</div></div>
+      <div class="kc kc-g" style="animation-delay:.14s"><div class="kl">Automação Chat</div><div class="kv">37,8%</div><div class="kd kd-up">▲ 33.427 sem operador</div><div class="ks">65,6% atendente real</div></div>
+      <div class="kc kc-a" style="animation-delay:.21s"><div class="kl">Reincidência 11+</div><div class="kv">19,4%</div><div class="kd kd-dn">▼ 2.757 clientes</div><div class="ks">11+ contatos em 2025</div></div>
+    </div>
+  </div>
+</section>
+<div class="div"></div>
+<section><div class="wrap">
+  <div class="st">Total de <span class="acc">Contatos</span> por Atendente</div>
+  <div class="cc"><div class="cct"><strong>Contatos Totais por Canal — Chat + Telefone</strong><span>Barras separadas por canal · Dados reais com mapeamento de ramais</span></div><canvas id="a_total_cont" style="max-height:260px"></canvas></div>
+
+
+  <div class="cc mt2"><div class="cct"><strong>Volume de Atendimento por Pessoa — Últimos 12 Meses</strong><span>Mar/25 → Fev/26 · Chat + Telefone · linha por atendente</span></div><canvas id="a_vol12" style="max-height:300px"></canvas></div>
+
+  <div class="st mt3">Atendimento <span class="acc">Chat</span></div>
+  <div class="g32">
+    <div>
+      <div class="cc"><div class="cct"><strong>Volume Mensal de Chats</strong><span>Jan/25 → Fev/26</span></div><canvas id="a_chat"></canvas></div>
+      <div class="cc mt"><div class="cct"><strong>Chat por Dia da Semana</strong></div><canvas id="a_chat_dia" style="max-height:190px"></canvas></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="cc"><div class="cct"><strong>Top Atendentes — Chat</strong><span>Volume total</span></div>
+        <div class="rl mt" style="margin-top:4px">
+          <div class="ri"><div class="rn">1</div><div><div class="rname">Rafael Mendes</div><div class="rbar"><div class="rbf" style="width:100%;background:var(--purple)"></div></div></div><div class="rval">14.809</div></div>
+          <div class="ri"><div class="rn">2</div><div><div class="rname">Camila Ferreira</div><div class="rbar"><div class="rbf" style="width:75.3%;background:var(--purple)"></div></div></div><div class="rval">11.154</div></div>
+          <div class="ri"><div class="rn">3</div><div><div class="rname">Priscila Costa</div><div class="rbar"><div class="rbf" style="width:65.5%;background:var(--blue)"></div></div></div><div class="rval">9.698</div></div>
+          <div class="ri"><div class="rn">4</div><div><div class="rname">Larissa Souza</div><div class="rbar"><div class="rbf" style="width:58.7%;background:var(--blue)"></div></div></div><div class="rval">8.683</div></div>
+          <div class="ri"><div class="rn">5</div><div><div class="rname">Beatriz Lima</div><div class="rbar"><div class="rbf" style="width:47.8%;background:var(--green)"></div></div></div><div class="rval">7.071</div></div>
+          <div class="ri"><div class="rn">6</div><div><div class="rname">Eduardo Nunes</div><div class="rbar"><div class="rbf" style="width:45.7%;background:var(--green)"></div></div></div><div class="rval">6.774</div></div>
+          <div class="ri"><div class="rn">7</div><div><div class="rname">Juliana Dias</div><div class="rbar"><div class="rbf" style="width:28%;background:var(--amber)"></div></div></div><div class="rval">4.154</div></div>
+        </div>
+      </div>
+      <div class="cc"><div class="cct"><strong>Departamentos Chat</strong></div><canvas id="a_depto" style="max-height:170px"></canvas></div>
+      <div class="cc"><div class="cct"><strong>Reincidência de Clientes</strong></div><canvas id="a_reinc" style="max-height:150px"></canvas></div>
+    </div>
+  </div>
+
+  <div class="st mt3">Atendimento <span class="acc">Telefone</span></div>
+  <div class="kg kg4">
+    <div class="kc kc-b"><div class="kl">Total Ligações</div><div class="kv">4.531</div><div class="kd kd-bl">● Nov/25 + Fev/26</div><div class="ks">2 meses de dados</div></div>
+    <div class="kc kc-g" style="animation-delay:.07s"><div class="kl">Atendidas</div><div class="kv">3.239</div><div class="kd kd-up">▲ TA: 83,6%</div><div class="ks">Fev/26: 98,1%</div></div>
+    <div class="kc kc-r" style="animation-delay:.14s"><div class="kl">Não Atendidas</div><div class="kv">769</div><div class="kd kd-dn">▼ 19,2% falha</div><div class="ks">Nov/25 maior falha</div></div>
+    <div class="kc kc-a" style="animation-delay:.21s"><div class="kl">TMA Médio</div><div class="kv">46s</div><div class="kd kd-bl">● TME espera: 59s</div><div class="ks">Dur. total ~112h</div></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cct"><strong>Ligações por Atendente (Ramal)</strong><span>Mapeamento: Camila→103, Priscila→100, Beatriz→101, Eduardo→105, Rafael→104, Larissa→107, Thiago→102</span></div><canvas id="a_tel_op"></canvas></div>
+    <div class="cc"><div class="cct"><strong>TMA e TA por Atendente (Telefone)</strong></div><canvas id="a_tel_tma"></canvas></div>
+  </div>
+  <div class="g3 mt">
+    <div class="cc"><div class="cct"><strong>Volume por Hora do Dia</strong><span>Pico às 14h</span></div><canvas id="a_tel_hora"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Ligações por Dia da Semana</strong></div><canvas id="a_tel_dia" style="max-height:210px"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Nov/25 vs Fev/26</strong><span>Evolução do atendimento</span></div><canvas id="a_tel_comp" style="max-height:210px"></canvas></div>
+  </div>
+  <div class="g2 mt">
+    <div class="cc"><div class="cct"><strong>Distribuição por Fila</strong></div><canvas id="a_fila" style="max-height:210px"></canvas></div>
+    <div class="cc"><div class="cct"><strong>TMA vs TME por Fila (segundos)</strong></div><canvas id="a_tma_fila"></canvas></div>
+  </div>
+
+  <div class="st mt3">Ordens de <span class="acc">Serviço</span></div>
+  <div class="g2">
+    <div class="cc"><div class="cct"><strong>OS por Mês</strong><span>Colorido por volume</span></div><canvas id="a_os_mes"></canvas></div>
+    <div class="cc"><div class="cct"><strong>OS por Dia da Semana</strong><span>Quarta-feira lidera — planejamento de campo</span></div><canvas id="a_os_dia" style="max-height:210px"></canvas></div>
+  </div>
+  <div class="note mt"><strong>💡 Planejamento de Campo:</strong> Quarta-feira concentra 1.045 OS (19,8% do total), seguida por Terça (925) e Sexta (904). Seg-Qua concentram maior volume de manutenção. Sugestão: reservar Qui-Sex para instalações novas e Seg-Qua para reparos programados.</div>
+  <div class="g2 mt">
+    <div class="cc"><div class="cct"><strong>Tipos de OS — Ranking</strong></div><canvas id="a_os_tipo"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Técnicos — Distribuição de OS</strong></div><canvas id="a_os_tec" style="max-height:210px"></canvas></div>
+  </div>
+
+  <div class="st mt3">Ratio <span class="acc">Resolução Interna</span> — (Chat + Telefone) por OS Aberta</div>
+  <div class="note" style="margin-bottom:16px"><strong>Como interpretar:</strong> O ratio considera <strong>todos os atendimentos (chat + ligações)</strong> dividido pelas OS abertas por aquele profissional. <strong>Ratio maior = melhor resolução interna</strong> — o atendente resolve mais pelo canal remoto sem gerar demanda de campo. Ranking decrescente — os melhores primeiro.</div>
+  <div class="cc"><div class="cct"><strong>Ranking de Resolução Interna — Ratio (Chat + Tel) ÷ OS Aberta</strong><span>Decrescente · maior = resolve mais sem acionar campo</span></div><canvas id="a_ratio" style="max-height:260px"></canvas></div>
+  <div class="tw mt">
+    <table class="dt">
+      <thead><tr><th>Rank</th><th>Atendente</th><th>Chat</th><th>Telefone</th><th>Total Contatos</th><th>OS Abertas</th><th>Ratio Total/OS</th><th>Perfil</th></tr></thead>
+      <tbody>
+        <tr><td>🥇 1</td><td>Rafael Mendes</td><td>14.809</td><td>267</td><td><strong>15.076</strong></td><td>486</td><td><strong style="color:var(--green)">31,0</strong></td><td><span class="pill pill-g">Alta Resolução</span></td></tr>
+        <tr><td>🥈 2</td><td>Sabrina</td><td>193</td><td>—</td><td><strong>193</strong></td><td>8</td><td><strong style="color:var(--green)">24,1</strong></td><td><span class="pill pill-g">Alta Resolução</span></td></tr>
+        <tr><td>🥉 3</td><td>Juliana</td><td>751</td><td>—</td><td><strong>751</strong></td><td>34</td><td><strong style="color:var(--green)">22,1</strong></td><td><span class="pill pill-g">Alta Resolução</span></td></tr>
+        <tr><td>4</td><td>Priscila Costa</td><td>9.698</td><td>224</td><td><strong>9.922</strong></td><td>582</td><td><strong style="color:var(--amber)">17,0</strong></td><td><span class="pill pill-a">Misto</span></td></tr>
+        <tr><td>5</td><td>Rodrigo</td><td>508</td><td>—</td><td><strong>508</strong></td><td>39</td><td><strong style="color:var(--amber)">13,0</strong></td><td><span class="pill pill-a">Misto</span></td></tr>
+        <tr><td>6</td><td>Larissa Souza</td><td>8.683</td><td>239</td><td><strong>8.922</strong></td><td>816</td><td><strong style="color:var(--amber)">10,9</strong></td><td><span class="pill pill-a">Misto</span></td></tr>
+        <tr><td>7</td><td>Eduardo Nunes</td><td>6.774</td><td>273</td><td><strong>7.047</strong></td><td>705</td><td><strong style="color:var(--orange)">10,0</strong></td><td><span class="pill pill-o">OS Frequente</span></td></tr>
+        <tr><td>8</td><td>Juliana Dias</td><td>4.154</td><td>—</td><td><strong>4.154</strong></td><td>434</td><td><strong style="color:var(--orange)">9,6</strong></td><td><span class="pill pill-o">OS Frequente</span></td></tr>
+        <tr><td>9</td><td>Camila Ferreira</td><td>11.154</td><td>39</td><td><strong>11.193</strong></td><td>1.215</td><td><strong style="color:var(--red)">9,2</strong></td><td><span class="pill pill-r">Maior Escalada</span></td></tr>
+        <tr><td>10</td><td>Beatriz*</td><td>7.071</td><td>203</td><td><strong>7.274</strong></td><td>961</td><td><strong style="color:var(--red)">7,6</strong></td><td><span class="pill pill-r">Especialista OS</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note mt"><strong>*Beatriz:</strong> Identificada por cruzamento de primeiro nome entre Chat (Beatriz Lima) e OS (BEATRIZ). Pode ter perfil especializado em triagem/abertura de OS, o que explicaria o ratio menor. Validar com gestão.</div>
+</div></section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAINEL COMISSIONAMENTO
+═══════════════════════════════════════════════════ -->
+<div class="panel" id="panel-comissao">
+<section class="hero hero-c">
+  <div class="wrap">
+    <div class="ey ey-c">FibraLink Telecom · KPIs de Comissionamento · Indicadores Vitais por Função</div>
+    <div class="htitle">PAINEL DE<br><span style="color:var(--cyan)">COMISSÕES</span></div>
+    <div class="hw"><span class="wbadge">Modelo</span><strong style="color:var(--amber)">KPIs Gatilho + Metas + Bônus</strong><span style="font-size:10px;color:var(--muted)">Indicadores reais da base para calibrar comissionamento por função</span></div>
+  </div>
+</section>
+<div class="div"></div>
+<section><div class="wrap">
+  <div class="st">KPIs <span class="acc">Comercial Interno</span> — Vendedores &amp; Atendentes</div>
+  <div class="com-grid">
+    <div class="com-card ok"><div class="com-label">Instalações/Mês</div><div class="com-val" style="color:var(--green)">186</div><div class="com-meta">Média Jan/25→Fev/26</div><span class="com-status ok">▲ Meta: 200</span></div>
+    <div class="com-card warn"><div class="com-label">Churn Rate</div><div class="com-val" style="color:var(--amber)">3,1%</div><div class="com-meta">807 / 21 meses base</div><span class="com-status warn">⚠ Meta: &lt;3%</span></div>
+    <div class="com-card ok"><div class="com-label">Saldo Líquido</div><div class="com-val" style="color:var(--green)">+136</div><div class="com-meta">Média mensal real</div><span class="com-status ok">▲ Meta: &gt;120</span></div>
+    <div class="com-card ok"><div class="com-label">Ticket Médio</div><div class="com-val" style="color:var(--green)">R$103</div><div class="com-meta">Fev/26 real</div><span class="com-status ok">▲ Meta: &gt;R$100</span></div>
+    <div class="com-card warn"><div class="com-label">Motivos N/A</div><div class="com-val" style="color:var(--amber)">61,5%</div><div class="com-meta">Sem motivo registrado</div><span class="com-status warn">⚠ Meta: &lt;20%</span></div>
+  </div>
+  <div class="gate-grid">
+    <div class="gate-card">
+      <div class="gate-title" style="color:var(--green)">🟢 Comissão Instalação</div>
+      <div class="gate-item"><span class="gate-name">Base por venda</span><span class="gate-val" style="color:var(--green)">R$ variável</span></div>
+      <div class="gate-item"><span class="gate-name">Gatilho 1: Churn &lt; 3%</span><span class="gate-val" style="color:var(--amber)">⚠ Atual: 3,1%</span></div>
+      <div class="gate-item"><span class="gate-name">Gatilho 2: Mín. 150 inst/mês</span><span class="gate-val" style="color:var(--green)">✓ Atual: 186</span></div>
+      <div class="gate-item"><span class="gate-name">Bônus ticket &gt; R$110</span><span class="gate-val" style="color:var(--muted)">+10% comissão</span></div>
+      <div class="gate-item"><span class="gate-name">Penalidade N/A motivo</span><span class="gate-val" style="color:var(--red)">-5% se &gt;20%</span></div>
+    </div>
+    <div class="gate-card">
+      <div class="gate-title" style="color:var(--blue)">🔵 Comissão Atendimento</div>
+      <div class="gate-item"><span class="gate-name">Base por meta chat</span><span class="gate-val" style="color:var(--blue)">R$ variável</span></div>
+      <div class="gate-item"><span class="gate-name">Gatilho 1: Reincid. &lt; 20%</span><span class="gate-val" style="color:var(--red)">✗ Atual: 19,4%</span></div>
+      <div class="gate-item"><span class="gate-name">Gatilho 2: Ratio &gt; 12</span><span class="gate-val" style="color:var(--amber)">⚠ Alguns abaixo</span></div>
+      <div class="gate-item"><span class="gate-name">Bônus TA tel. &gt; 90%</span><span class="gate-val" style="color:var(--green)">✓ Fev/26: 98,1%</span></div>
+      <div class="gate-item"><span class="gate-name">Bônus resolução interna</span><span class="gate-val" style="color:var(--muted)">Ratio &gt; 15</span></div>
+    </div>
+    <div class="gate-card">
+      <div class="gate-title" style="color:var(--purple)">🟣 Comissão Financeiro</div>
+      <div class="gate-item"><span class="gate-name">Base por recuperação</span><span class="gate-val" style="color:var(--purple)">R$ variável</span></div>
+      <div class="gate-item"><span class="gate-name">Gatilho 1: Inadimp. &lt; 2%</span><span class="gate-val" style="color:var(--green)">✓ Atual: 1,98%</span></div>
+      <div class="gate-item"><span class="gate-name">Gatilho 2: Aging &gt;180d &lt;20%</span><span class="gate-val" style="color:var(--red)">✗ Atual: 19% ok</span></div>
+      <div class="gate-item"><span class="gate-name">Bônus por R$ recuperado</span><span class="gate-val" style="color:var(--muted)">5% do recuperado</span></div>
+      <div class="gate-item"><span class="gate-name">Meta suspensão ativa</span><span class="gate-val" style="color:var(--amber)">⚠ 1.024 casos</span></div>
+    </div>
+  </div>
+
+  <div class="st mt3">KPIs <span class="acc">Financeiro</span></div>
+  <div class="com-grid">
+    <div class="com-card ok"><div class="com-label">Taxa Adimplência</div><div class="com-val" style="color:var(--green)">98,0%</div><div class="com-meta">68.227 quitados</div><span class="com-status ok">▲ Excelente</span></div>
+    <div class="com-card bad"><div class="com-label">Aging Crítico &gt;90d</div><div class="com-val" style="color:var(--red)">57,2%</div><div class="com-meta">790 de 1.547 casos</div><span class="com-status bad">✗ Meta: &lt;30%</span></div>
+    <div class="com-card warn"><div class="com-label">Saldo Total Aberto</div><div class="com-val" style="color:var(--amber)">R$158K</div><div class="com-meta">1.547 inadimplentes</div><span class="com-status warn">⚠ Reduzir</span></div>
+    <div class="com-card warn"><div class="com-label">Suspensos por Débito</div><div class="com-val" style="color:var(--amber)">393</div><div class="com-meta">R$37,4K/mês em risco</div><span class="com-status warn">⚠ Recuperar</span></div>
+    <div class="com-card neu"><div class="com-label">Receita em Risco</div><div class="com-val" style="color:var(--blue)">R$98K</div><div class="com-meta">12% da receita ativa</div><span class="com-status neu">● Monitorar</span></div>
+  </div>
+
+  <div class="st mt3">KPIs <span class="acc">Atendimento</span></div>
+  <div class="com-grid">
+    <div class="com-card ok"><div class="com-label">TA Telefone Fev/26</div><div class="com-val" style="color:var(--green)">98,1%</div><div class="com-meta">2.079 / 2.134</div><span class="com-status ok">▲ Meta: &gt;90%</span></div>
+    <div class="com-card bad"><div class="com-label">Reincidência 11+</div><div class="com-val" style="color:var(--red)">19,4%</div><div class="com-meta">2.757 clientes</div><span class="com-status bad">✗ Meta: &lt;15%</span></div>
+    <div class="com-card warn"><div class="com-label">TMA Médio</div><div class="com-val" style="color:var(--amber)">46s</div><div class="com-meta">Tempo médio atend.</div><span class="com-status warn">⚠ Meta: &lt;40s</span></div>
+    <div class="com-card bad"><div class="com-label">TME (Espera)</div><div class="com-val" style="color:var(--red)">59s</div><div class="com-meta">Tempo fila</div><span class="com-status bad">✗ Meta: &lt;45s</span></div>
+    <div class="com-card warn"><div class="com-label">Automação Chat</div><div class="com-val" style="color:var(--amber)">37,8%</div><div class="com-meta">33.427 chats bot</div><span class="com-status warn">● Meta: &gt;40%</span></div>
+  </div>
+
+  <div class="st mt3">Ranking <span class="acc">Individual</span> — Atendentes</div>
+  <div class="cc"><div class="cct"><strong>Score de Comissionamento por Atendente</strong><span>Ratio resolução + Volume chat + TA telefone (ponderado)</span></div>
+  <div class="tw">
+    <table class="dt">
+      <thead><tr><th>Rank</th><th>Atendente</th><th>Chat Total</th><th>Tel Total</th><th>Contatos</th><th>Ratio Chat/OS</th><th>TA Tel.</th><th>Score</th><th>Status Comis.</th></tr></thead>
+      <tbody>
+        <tr><td>🥇</td><td>Rafael Mendes</td><td>14.809</td><td>267</td><td>15.076</td><td style="color:var(--green)">30,5</td><td style="color:var(--green)">94%</td><td style="color:var(--green)"><strong>★★★★★</strong></td><td><span class="pill pill-g">Elegível</span></td></tr>
+        <tr><td>🥈</td><td>Priscila Costa</td><td>9.698</td><td>224</td><td>9.922</td><td style="color:var(--amber)">17,0</td><td style="color:var(--amber)">85%</td><td style="color:var(--green)"><strong>★★★★</strong></td><td><span class="pill pill-g">Elegível</span></td></tr>
+        <tr><td>🥉</td><td>Larissa Souza</td><td>8.683</td><td>239</td><td>8.922</td><td style="color:var(--amber)">10,6</td><td style="color:var(--amber)">75%</td><td style="color:var(--amber)"><strong>★★★</strong></td><td><span class="pill pill-a">Parcial</span></td></tr>
+        <tr><td>4</td><td>Camila Ferreira</td><td>11.154</td><td>39</td><td>11.193</td><td style="color:var(--red)">9,2</td><td style="color:var(--muted)">79%</td><td style="color:var(--amber)"><strong>★★★</strong></td><td><span class="pill pill-a">Parcial</span></td></tr>
+        <tr><td>5</td><td>Eduardo Nunes</td><td>6.774</td><td>273</td><td>7.047</td><td style="color:var(--orange)">9,6</td><td style="color:var(--green)">89%</td><td style="color:var(--amber)"><strong>★★★</strong></td><td><span class="pill pill-a">Parcial</span></td></tr>
+        <tr><td>6</td><td>Beatriz Lima</td><td>7.071</td><td>203</td><td>7.274</td><td style="color:var(--red)">7,4</td><td style="color:var(--amber)">78%</td><td style="color:var(--orange)"><strong>★★</strong></td><td><span class="pill pill-o">Revisar</span></td></tr>
+        <tr><td>7</td><td>Juliana Dias</td><td>4.154</td><td>—</td><td>4.154</td><td style="color:var(--orange)">9,6</td><td style="color:var(--muted)">—</td><td style="color:var(--orange)"><strong>★★</strong></td><td><span class="pill pill-o">Revisar</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+  <div class="g2 mt">
+    <div class="cc"><div class="cct"><strong>Volume Total de Contatos — Ranking</strong></div><canvas id="k_cont"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Ratio Resolução Interna — Ranking</strong></div><canvas id="k_ratio"></canvas></div>
+  </div>
+  <div class="bn bn-g mt3" style="margin-top:24px">
+    <div style="font-size:22px">💡</div>
+    <div>
+      <div class="bn-title" style="color:var(--green)">MODELO SUGERIDO DE COMISSIONAMENTO</div>
+      <div class="bn-text"><strong>Comercial:</strong> Comissão base por instalação + bônus de 10% se churn mensal &lt;3% + bônus de R$X por ticket &gt;R$110 + penalidade de -5% se motivos N/A &gt;20%.<br><strong>Atendimento:</strong> Bônus mensal se reincidência &lt;15% + bônus por ratio Chat/OS &gt;15 (resolução interna) + bônus TA tel. &gt;90%.<br><strong>Financeiro:</strong> Comissão de 5% sobre valor recuperado de inadimplentes + bônus se aging &gt;180d cair abaixo de 25%.<br><strong>Campo:</strong> Não aplicável enquanto concentração técnica não for corrigida — risco de distorção de indicadores.</div>
+    </div>
+  </div>
+</div></section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAINEL CONTAS A PAGAR / DRE
+═══════════════════════════════════════════════════ -->
+<div class="panel" id="panel-financeiro2">
+<section class="hero" style="padding-bottom:40px;position:relative;overflow:hidden">
+  <div style="position:absolute;top:-250px;right:-150px;width:650px;height:650px;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,.055) 0%,transparent 65%);pointer-events:none"></div>
+  <div class="wrap">
+    <div class="ey" style="color:var(--red)"><span style="width:24px;height:2px;background:var(--red);display:inline-block"></span> FibraLink Telecom · Gestão Financeira · Dados Ilustrativos</div>
+    <div class="htitle">CONTAS A<br><span style="color:var(--red)">PAGAR</span></div>
+    <div class="hw"><span class="wbadge">Referência</span><strong style="color:var(--amber)">Fev/2026</strong><span style="font-size:10px;color:var(--muted)">⚠ Dados fictícios para estruturação do modelo — substituir pelos reais</span></div>
+    <div class="kg kg4">
+      <div class="kc kc-r"><div class="kl">Total Custos/Mês</div><div class="kv">R$169K</div><div class="kd kd-bl">● Folha + Fixo + Var.</div><div class="ks">22 colaboradores</div></div>
+      <div class="kc kc-g" style="animation-delay:.07s"><div class="kl">EBITDA Estimado</div><div class="kv">R$654K</div><div class="kd kd-up">▲ Margem 78%</div><div class="ks">Receita R$823K/mês</div></div>
+      <div class="kc kc-o" style="animation-delay:.14s"><div class="kl">Folha Total c/ Enc.</div><div class="kv">R$101K</div><div class="kd kd-bl">● 60% dos custos</div><div class="ks">Encargos 68% CLT</div></div>
+      <div class="kc kc-b" style="animation-delay:.21s"><div class="kl">Custo por Cliente</div><div class="kv">R$24,18</div><div class="kd kd-up">▲ Eficiência alta</div><div class="ks">R$169K ÷ 6.971 clientes</div></div>
+    </div>
+  </div>
+</section>
+<div class="div"></div>
+<section><div class="wrap">
+
+  <div class="st">DRE <span class="acc">Resumida</span> — Mensal</div>
+  <div class="g21">
+    <div>
+      <div class="cc">
+        <div class="cct"><strong>Demonstrativo de Resultado</strong><span>Fev/26 · dados ilustrativos</span></div>
+        <div class="dre-row"><span class="dre-label">🟢 Receita Bruta</span><span class="dre-val" style="color:var(--green)">R$ 765.942</span></div>
+        <div class="dre-row" style="background:rgba(239,68,68,.03)"><span class="dre-label">🔴 (-) Folha de Pagamento c/ Encargos</span><span class="dre-val" style="color:var(--red)">R$ 101.158</span></div>
+        <div class="dre-row" style="background:rgba(249,115,22,.03)"><span class="dre-label">🟠 (-) Custos Fixos Operacionais</span><span class="dre-val" style="color:var(--orange)">R$ 34.410</span></div>
+        <div class="dre-row" style="background:rgba(251,191,36,.03)"><span class="dre-label">🟡 (-) Custos Variáveis</span><span class="dre-val" style="color:var(--amber)">R$ 33.200</span></div>
+        <div class="dre-row dre-total"><span class="dre-label" style="font-weight:600;color:var(--text)">Total de Custos</span><span class="dre-val" style="color:var(--red)">R$ 168.768</span></div>
+        <div class="dre-row dre-ebitda"><span class="dre-label" style="font-weight:700;font-size:13px;color:var(--green)">✅ EBITDA</span><span class="dre-val" style="color:var(--green);font-size:15px">R$ 597.174</span></div>
+        <div class="dre-row" style="background:rgba(34,197,94,.04)"><span class="dre-label" style="color:var(--green)">Margem EBITDA</span><span class="dre-val" style="color:var(--green);font-size:14px">79,3%</span></div>
+      </div>
+      <div class="cc mt">
+        <div class="cct"><strong>Composição dos Custos</strong></div>
+        <canvas id="f2_comp" style="max-height:210px"></canvas>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="cc">
+        <div class="cct"><strong>Receita vs Custos vs EBITDA — 12 Meses</strong></div>
+        <canvas id="f2_dre12"></canvas>
+      </div>
+      <div class="cc">
+        <div class="cct"><strong>Margem EBITDA — Evolução</strong></div>
+        <canvas id="f2_margem" style="max-height:160px"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="st mt3">Folha de <span class="acc">Pagamento</span></div>
+  <div class="g2">
+    <div class="cc">
+      <div class="cct"><strong>Custo Total por Área — c/ Encargos (68% CLT)</strong></div>
+      <div class="prog-wrap mt" style="margin-top:8px">
+        <div class="prog-item"><span class="prog-label">Operacional/Atendimento</span><div class="prog-bar"><div class="prog-fill" style="width:100%;background:var(--purple)"></div></div><span class="prog-val" style="color:var(--purple)">R$35.280</span></div>
+        <div class="prog-item"><span class="prog-label">Técnico de Campo</span><div class="prog-bar"><div class="prog-fill" style="width:66.7%;background:var(--orange)"></div></div><span class="prog-val" style="color:var(--orange)">R$23.520</span></div>
+        <div class="prog-item"><span class="prog-label">Gestão / Supervisão</span><div class="prog-bar"><div class="prog-fill" style="width:52.4%;background:var(--amber)"></div></div><span class="prog-val" style="color:var(--amber)">R$18.480</span></div>
+        <div class="prog-item"><span class="prog-label">Administrativo</span><div class="prog-bar"><div class="prog-fill" style="width:45.7%;background:var(--blue)"></div></div><span class="prog-val" style="color:var(--blue)">R$16.128</span></div>
+        <div class="prog-item"><span class="prog-label">Comercial Externo</span><div class="prog-bar"><div class="prog-fill" style="width:22%;background:var(--green)"></div></div><span class="prog-val" style="color:var(--green)">R$7.750</span></div>
+      </div>
+      <div class="note mt">
+        <strong>Encargos CLT:</strong> INSS patronal 20% + FGTS 8% + Férias 11,11% + 13º 8,33% + outros ≈ <strong>68% sobre o salário bruto</strong>. Um colaborador com salário de R$2.500 custa efetivamente R$4.200/mês. Terceirização de funções operacionais pode reduzir encargos para ~30%.
+      </div>
+    </div>
+    <div class="cc">
+      <div class="cct"><strong>Headcount e Custo Médio por Área</strong></div>
+      <canvas id="f2_folha"></canvas>
+      <div class="tw mt" style="margin-top:12px">
+        <table class="dt">
+          <thead><tr><th>Área</th><th>HC</th><th>Sal. Médio</th><th>Bruto/mês</th><th>c/ Encargos</th><th>Custo/Head</th></tr></thead>
+          <tbody>
+            <tr><td>Operacional/Atend.</td><td>10</td><td>R$2.100</td><td>R$21.000</td><td style="color:var(--red)">R$35.280</td><td style="color:var(--muted)">R$3.528</td></tr>
+            <tr><td>Técnico de Campo</td><td>5</td><td>R$2.800</td><td>R$14.000</td><td style="color:var(--red)">R$23.520</td><td style="color:var(--muted)">R$4.704</td></tr>
+            <tr><td>Administrativo</td><td>3</td><td>R$3.200</td><td>R$9.600</td><td style="color:var(--red)">R$16.128</td><td style="color:var(--muted)">R$5.376</td></tr>
+            <tr><td>Comercial Externo</td><td>2</td><td>R$2.500</td><td>R$5.000</td><td style="color:var(--amber)">R$7.750</td><td style="color:var(--muted)">R$3.875</td></tr>
+            <tr><td>Gestão/Supervisão</td><td>2</td><td>R$5.500</td><td>R$11.000</td><td style="color:var(--red)">R$18.480</td><td style="color:var(--muted)">R$9.240</td></tr>
+            <tr style="font-weight:600"><td>TOTAL</td><td>22</td><td>R$2.750</td><td>R$60.600</td><td style="color:var(--red)">R$101.158</td><td style="color:var(--muted)">R$4.598</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="st mt3">Custos <span class="acc">Fixos</span> Operacionais</div>
+  <div class="g32">
+    <div class="cc">
+      <div class="cct"><strong>Detalhamento — Custos Fixos Mensais</strong><span>R$34.410 total</span></div>
+      <div class="prog-wrap mt" style="margin-top:8px">
+        <div class="prog-item"><span class="prog-label">Links de Backbone</span><div class="prog-bar"><div class="prog-fill" style="width:100%;background:var(--blue)"></div></div><span class="prog-val" style="color:var(--blue)">R$6.800</span></div>
+        <div class="prog-item"><span class="prog-label">Internet Trânsito</span><div class="prog-bar"><div class="prog-fill" style="width:66.2%;background:var(--blue)"></div></div><span class="prog-val" style="color:var(--blue)">R$4.500</span></div>
+        <div class="prog-item"><span class="prog-label">Combustível Frota</span><div class="prog-bar"><div class="prog-fill" style="width:47.1%;background:var(--orange)"></div></div><span class="prog-val" style="color:var(--orange)">R$3.200</span></div>
+        <div class="prog-item"><span class="prog-label">Aluguel Sede</span><div class="prog-bar"><div class="prog-fill" style="width:55.9%;background:var(--amber)"></div></div><span class="prog-val" style="color:var(--amber)">R$3.800</span></div>
+        <div class="prog-item"><span class="prog-label">Manutenção Rede</span><div class="prog-bar"><div class="prog-fill" style="width:41.2%;background:var(--green)"></div></div><span class="prog-val" style="color:var(--green)">R$2.800</span></div>
+        <div class="prog-item"><span class="prog-label">Energia Elétrica</span><div class="prog-bar"><div class="prog-fill" style="width:32.4%;background:var(--amber)"></div></div><span class="prog-val" style="color:var(--amber)">R$2.200</span></div>
+        <div class="prog-item"><span class="prog-label">Contabilidade/Jurídico</span><div class="prog-bar"><div class="prog-fill" style="width:35.3%;background:var(--purple)"></div></div><span class="prog-val" style="color:var(--purple)">R$2.400</span></div>
+        <div class="prog-item"><span class="prog-label">Marketing</span><div class="prog-bar"><div class="prog-fill" style="width:26.5%;background:var(--cyan)"></div></div><span class="prog-val" style="color:var(--cyan)">R$1.800</span></div>
+        <div class="prog-item"><span class="prog-label">Software / SaaS</span><div class="prog-bar"><div class="prog-fill" style="width:27.9%;background:var(--purple)"></div></div><span class="prog-val" style="color:var(--purple)">R$1.900</span></div>
+        <div class="prog-item"><span class="prog-label">Manutenção Veículos</span><div class="prog-bar"><div class="prog-fill" style="width:20.6%;background:var(--orange)"></div></div><span class="prog-val" style="color:var(--orange)">R$1.400</span></div>
+        <div class="prog-item"><span class="prog-label">Seguros</span><div class="prog-bar"><div class="prog-fill" style="width:16.2%;background:var(--muted)"></div></div><span class="prog-val">R$1.100</span></div>
+        <div class="prog-item"><span class="prog-label">Telefonia Corp.</span><div class="prog-bar"><div class="prog-fill" style="width:13.1%;background:var(--muted)"></div></div><span class="prog-val">R$890</span></div>
+        <div class="prog-item"><span class="prog-label">Outros Fixos</span><div class="prog-bar"><div class="prog-fill" style="width:17.6%;background:var(--muted)"></div></div><span class="prog-val">R$1.200</span></div>
+        <div class="prog-item"><span class="prog-label">Material Escritório</span><div class="prog-bar"><div class="prog-fill" style="width:6.2%;background:var(--muted)"></div></div><span class="prog-val">R$420</span></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="cc">
+        <div class="cct"><strong>Fixo vs Variável</strong></div>
+        <canvas id="f2_fixvar" style="max-height:180px"></canvas>
+      </div>
+      <div class="cc">
+        <div class="cct"><strong>Custos Variáveis</strong></div>
+        <div class="prog-wrap mt" style="margin-top:4px">
+          <div class="prog-item"><span class="prog-label">Equipamentos Inst.</span><div class="prog-bar"><div class="prog-fill" style="width:100%;background:var(--orange)"></div></div><span class="prog-val" style="color:var(--orange)">R$12.400</span></div>
+          <div class="prog-item"><span class="prog-label">Estoque Reposição</span><div class="prog-bar"><div class="prog-fill" style="width:66.1%;background:var(--amber)"></div></div><span class="prog-val" style="color:var(--amber)">R$8.200</span></div>
+          <div class="prog-item"><span class="prog-label">Inadimpl. Provisionada</span><div class="prog-bar"><div class="prog-fill" style="width:33.9%;background:var(--red)"></div></div><span class="prog-val" style="color:var(--red)">R$4.200</span></div>
+          <div class="prog-item"><span class="prog-label">MO Terceirizada</span><div class="prog-bar"><div class="prog-fill" style="width:29%;background:var(--blue)"></div></div><span class="prog-val" style="color:var(--blue)">R$3.600</span></div>
+          <div class="prog-item"><span class="prog-label">Comissões Comerciais</span><div class="prog-bar"><div class="prog-fill" style="width:38.7%;background:var(--green)"></div></div><span class="prog-val" style="color:var(--green)">R$4.800</span></div>
+        </div>
+      </div>
+      <div class="bn bn-a" style="padding:13px 15px">
+        <div style="font-size:18px">💡</div>
+        <div>
+          <div style="font-family:var(--Fd);font-size:15px;color:var(--amber);margin-bottom:4px">BOAS PRÁTICAS</div>
+          <div style="font-size:10px;color:var(--muted);line-height:1.7">
+            <strong style="color:var(--text)">Folha:</strong> Meta &lt;20% da receita. Atual: 13,2% ✅<br>
+            <strong style="color:var(--text)">Fixos:</strong> Meta &lt;10% da receita. Atual: 4,5% ✅<br>
+            <strong style="color:var(--text)">Variáveis:</strong> Acompanhar crescimento proporcional.<br>
+            <strong style="color:var(--text)">EBITDA:</strong> Referência telecom: 35–45%. Atual: 78% ✅<br>
+            <strong style="color:var(--text)">Atenção:</strong> Backbone e trânsito crescem com base — monitorar custo/GB à medida que escala.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="st mt3">Contas a Pagar — <span class="acc">Evolução</span></div>
+  <div class="cc">
+    <div class="cct"><strong>Receita vs Custos Totais vs EBITDA — 12 Meses</strong><span>Mar/25 → Fev/26 · dados ilustrativos</span></div>
+    <canvas id="f2_evolucao" style="max-height:270px"></canvas>
+  </div>
+  <div class="g3 mt">
+    <div class="cc"><div class="cct"><strong>Custo por Cliente/Mês</strong><span>Eficiência operacional</span></div><canvas id="f2_cpcliente" style="max-height:200px"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Índice Folha / Receita</strong><span>Meta &lt;20%</span></div><canvas id="f2_folharec" style="max-height:200px"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Ponto de Equilíbrio</strong><span>Clientes mínimos para cobrir custos</span></div>
+      <div style="text-align:center;padding:28px 0">
+        <div style="font-family:var(--Fd);font-size:72px;line-height:1;color:var(--orange)">1.546</div>
+        <div style="font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:6px">clientes para break-even</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:10px">R$168.768 custos ÷ R$109,42 ticket</div>
+        <div style="margin-top:12px;padding:10px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:2px">
+          <div style="font-family:var(--Fd);font-size:26px;color:var(--green)">4,6× acima</div>
+          <div style="font-size:10px;color:var(--muted)">Base atual: 6.971 ativos<br>Margem de segurança: 4.558 clientes</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div></section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAINEL ESTOQUE
+═══════════════════════════════════════════════════ -->
+<div class="panel" id="panel-estoque">
+<section class="hero" style="padding-bottom:40px;position:relative;overflow:hidden">
+  <div style="position:absolute;top:-250px;right:-150px;width:650px;height:650px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,.055) 0%,transparent 65%);pointer-events:none"></div>
+  <div class="wrap">
+    <div class="ey" style="color:var(--cyan)"><span style="width:24px;height:2px;background:var(--cyan);display:inline-block"></span> FibraLink Telecom · Gestão de Estoque · Dados Ilustrativos</div>
+    <div class="htitle">GESTÃO DE<br><span style="color:var(--cyan)">ESTOQUE</span></div>
+    <div class="hw"><span class="wbadge">Inventário</span><strong style="color:var(--amber)">Fev/2026</strong><span style="font-size:10px;color:var(--muted)">⚠ Dados fictícios para estruturação — substituir pelos reais do sistema de estoque</span></div>
+    <div class="kg kg4">
+      <div class="kc kc-cyan"><div class="kl">Valor Total Estoque</div><div class="kv">R$134,6K</div><div class="kd kd-bl">● 15 SKUs ativos</div><div class="ks">Inventário atual</div></div>
+      <div class="kc kc-r" style="animation-delay:.07s"><div class="kl">Itens Críticos</div><div class="kv">1</div><div class="kd kd-dn">▼ Abaixo do mínimo</div><div class="ks">Roteador Mesh</div></div>
+      <div class="kc kc-a" style="animation-delay:.14s"><div class="kl">Itens em Alerta</div><div class="kv">1</div><div class="kd kd-am">⚠ Próximo do mínimo</div><div class="ks">OLT 16 portas</div></div>
+      <div class="kc kc-g" style="animation-delay:.21s"><div class="kl">Cobertura Média</div><div class="kv">63 dias</div><div class="kd kd-up">▲ Saudável</div><div class="ks">Baseado no giro/mês</div></div>
+    </div>
+  </div>
+</section>
+<div class="div"></div>
+<section><div class="wrap">
+
+  <div class="st">Inventário <span class="acc">Atual</span></div>
+  <div class="g2">
+    <div class="cc"><div class="cct"><strong>Valor em Estoque por Categoria</strong></div><canvas id="e_cat" style="max-height:220px"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Movimentação Mensal — Entradas vs Saídas</strong><span>Mar/25 → Fev/26</span></div><canvas id="e_mov"></canvas></div>
+  </div>
+
+  <div class="cc mt">
+    <div class="cct"><strong>Posição de Estoque — Todos os Itens</strong><span>Estoque atual vs mínimo · cobertura em dias · status</span></div>
+    <div class="tw">
+      <table class="dt">
+        <thead><tr><th>SKU</th><th>Produto</th><th>Categoria</th><th>Estoque</th><th>Mín.</th><th>Cobertura</th><th>Custo Unit.</th><th>Valor Total</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>RTR-001</td><td>Roteador Wi-Fi 5 Dual Band</td><td>Roteadores</td><td>87</td><td>30</td><td>58d</td><td>R$189,90</td><td>R$16.521</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>RTR-002</td><td>Roteador Wi-Fi 6 AX1800</td><td>Roteadores</td><td>34</td><td>20</td><td>46d</td><td>R$289,90</td><td>R$9.857</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr style="background:rgba(239,68,68,.05)"><td>RTR-003</td><td>Roteador Mesh (par)</td><td>Roteadores</td><td><strong style="color:var(--red)">12</strong></td><td>15</td><td>45d</td><td>R$549,90</td><td>R$6.599</td><td><span class="est-badge est-critico">CRÍTICO</span></td></tr>
+          <tr><td>ONU-001</td><td>ONU GPON Fibra</td><td>ONUs</td><td>214</td><td>80</td><td>54d</td><td>R$79,90</td><td>R$17.099</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>ONU-002</td><td>ONU GPON 4 portas</td><td>ONUs</td><td>68</td><td>40</td><td>58d</td><td>R$129,90</td><td>R$8.833</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr style="background:rgba(251,191,36,.04)"><td>OLT-001</td><td>OLT 16 portas</td><td>Infraestrutura</td><td><strong style="color:var(--amber)">3</strong></td><td>2</td><td>90d</td><td>R$4.800,00</td><td>R$14.400</td><td><span class="est-badge est-alerta">ALERTA</span></td></tr>
+          <tr><td>CAB-001</td><td>Cabo Drop FTTH 500m</td><td>Cabos</td><td>42</td><td>20</td><td>70d</td><td>R$210,00</td><td>R$8.820</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>CAB-002</td><td>Cabo Drop FTTH 1km</td><td>Cabos</td><td>28</td><td>15</td><td>70d</td><td>R$390,00</td><td>R$10.920</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>CXE-001</td><td>Caixa Emenda Óptica</td><td>Acessórios</td><td>156</td><td>50</td><td>78d</td><td>R$34,90</td><td>R$5.444</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>SPL-001</td><td>Splitter 1×8</td><td>Acessórios</td><td>89</td><td>40</td><td>49d</td><td>R$18,90</td><td>R$1.682</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>SPL-002</td><td>Splitter 1×16</td><td>Acessórios</td><td>44</td><td>20</td><td>47d</td><td>R$32,90</td><td>R$1.448</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>CON-001</td><td>Conector SC/APC</td><td>Acessórios</td><td>840</td><td>300</td><td>63d</td><td>R$2,90</td><td>R$2.436</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>PCH-001</td><td>Patch Cord 3m</td><td>Acessórios</td><td>210</td><td>80</td><td>70d</td><td>R$9,90</td><td>R$2.079</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>CTO-001</td><td>Caixa Terminal Óptica</td><td>Infraestrutura</td><td>67</td><td>25</td><td>67d</td><td>R$89,90</td><td>R$6.023</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>PST-001</td><td>Poste Pré-moldado 7m</td><td>Infraestrutura</td><td>18</td><td>10</td><td>90d</td><td>R$320,00</td><td>R$5.760</td><td><span class="est-badge est-ok">OK</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="st mt3">Cobertura &amp; <span class="acc">Giro</span></div>
+  <div class="g2">
+    <div class="cc"><div class="cct"><strong>Cobertura em Dias por Item</strong><span>Linha vermelha = mínimo 30 dias</span></div><canvas id="e_cob" style="max-height:240px"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Saldo de Estoque — Acumulado 12m</strong></div><canvas id="e_saldo"></canvas></div>
+  </div>
+
+  <div class="bn mt" style="background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(249,115,22,.05));border:1px solid rgba(239,68,68,.25);border-left:3px solid var(--red);padding:16px 20px;border-radius:2px">
+    <div style="font-size:20px">🚨</div>
+    <div>
+      <div style="font-family:var(--Fd);font-size:17px;color:var(--red);margin-bottom:4px">AÇÕES URGENTES DE ESTOQUE</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.8">
+        <strong style="color:var(--red)">CRÍTICO — Roteador Mesh (RTR-003):</strong> Estoque 12 unidades, abaixo do mínimo de 15. Giro de 8/mês = cobertura de 45 dias mas já está em ruptura de ponto de reorder. Comprar imediatamente mínimo 20 unidades.<br>
+        <strong style="color:var(--amber)">ALERTA — OLT 16 portas (OLT-001):</strong> Alto valor unitário (R$4.800) com apenas 3 unidades. Lead time de fornecedor tende a ser longo. Acionar pedido preventivo.
+      </div>
+    </div>
+  </div>
+
+  <div class="st mt3">Boas <span class="acc">Práticas</span> de Gestão de Estoque</div>
+  <div class="g3">
+    <div class="cc">
+      <div class="cct"><strong>Ponto de Reorder</strong></div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.9;padding:4px 0">
+        <div style="padding:8px;background:rgba(59,130,246,.06);border-radius:2px;border-left:2px solid var(--blue);margin-bottom:8px">
+          <strong style="color:var(--blue)">Fórmula:</strong><br>
+          <span style="font-family:var(--Fm);font-size:10px">PR = (Giro/dia × Lead Time) + Estoque Segurança</span>
+        </div>
+        <strong style="color:var(--text)">Estoque de segurança:</strong> 15–30% do giro mensal para itens críticos da instalação (ONU, cabo, conectores).<br>
+        <strong style="color:var(--text)">Lead time típico:</strong> 7–15 dias para distribuidoras nacionais, 30–60 dias para importados.<br>
+        <strong style="color:var(--text)">Curva ABC:</strong> Classifique os itens por valor × giro. ONU e Cabo são classe A — nunca deixar zerar.
+      </div>
+    </div>
+    <div class="cc">
+      <div class="cct"><strong>KPIs de Estoque Recomendados</strong></div>
+      <div style="display:flex;flex-direction:column;gap:7px;padding:4px 0">
+        <div class="gate-item"><span class="gate-name">Giro de Estoque</span><span class="gate-val" style="color:var(--green)">Meta: &gt;6×/ano</span></div>
+        <div class="gate-item"><span class="gate-name">Cobertura Mínima</span><span class="gate-val" style="color:var(--blue)">30–45 dias</span></div>
+        <div class="gate-item"><span class="gate-name">Cobertura Máxima</span><span class="gate-val" style="color:var(--amber)">90 dias (capital)</span></div>
+        <div class="gate-item"><span class="gate-name">Itens sem movim. 60d</span><span class="gate-val" style="color:var(--red)">Meta: 0%</span></div>
+        <div class="gate-item"><span class="gate-name">Ruptura de Estoque</span><span class="gate-val" style="color:var(--red)">Meta: 0 ocorr./mês</span></div>
+        <div class="gate-item"><span class="gate-name">Acuracidade Inventário</span><span class="gate-val" style="color:var(--green)">Meta: &gt;98%</span></div>
+        <div class="gate-item"><span class="gate-name">Custo Estoque / Receita</span><span class="gate-val" style="color:var(--amber)">Meta: &lt;20%</span></div>
+      </div>
+    </div>
+    <div class="cc">
+      <div class="cct"><strong>Próximos Passos</strong></div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.9;padding:4px 0">
+        <div style="display:flex;gap:9px;padding:7px 0;border-bottom:1px solid var(--border2)"><span style="color:var(--green);flex-shrink:0">①</span><span>Integrar sistema de estoque ao ERP/CRM para atualização automática a cada OS encerrada</span></div>
+        <div style="display:flex;gap:9px;padding:7px 0;border-bottom:1px solid var(--border2)"><span style="color:var(--blue);flex-shrink:0">②</span><span>Criar alertas automáticos de reorder por e-mail/Slack quando estoque atingir ponto mínimo</span></div>
+        <div style="display:flex;gap:9px;padding:7px 0;border-bottom:1px solid var(--border2)"><span style="color:var(--amber);flex-shrink:0">③</span><span>Realizar inventário físico mensal nos itens classe A (ONU, Cabo, Roteadores)</span></div>
+        <div style="display:flex;gap:9px;padding:7px 0;border-bottom:1px solid var(--border2)"><span style="color:var(--orange);flex-shrink:0">④</span><span>Negociar estoque consignado com fornecedor de ONU e roteadores para reduzir capital imobilizado</span></div>
+        <div style="display:flex;gap:9px;padding:7px 0"><span style="color:var(--purple);flex-shrink:0">⑤</span><span>Conectar dados de OS (tipo "Roteador") ao estoque para previsão automática de consumo</span></div>
+      </div>
+    </div>
+  </div>
+
+</div></section>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="wrap"><div class="fi">
+    <div><div class="fbrand">FibraLink</div><div class="mono" style="font-size:9px;color:var(--muted);margin-top:3px">Telecom · BI 5 Painéis · v3 · Mar/2026</div></div>
+    <div class="fstats">
+      <div><div class="fv">11.843</div><div class="fl">Cadastros</div></div>
+      <div><div class="fv">108.693</div><div class="fl">Chats</div></div>
+      <div><div class="fv">4.531</div><div class="fl">Ligações</div></div>
+      <div><div class="fv">5.914</div><div class="fl">OS</div></div>
+      <div><div class="fv">79.214</div><div class="fl">Reg. Financ.</div></div>
+    </div>
+    <div class="fnote">BASE_DADOS_BI.xlsx · Python/openpyxl<br>Dados reais extraídos e validados</div>
+  </div></div>
+</footer>
+
+<script>
+// ============ NAV ============
+function sw(id, el, color) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active','G','B','P','C'));
+  document.getElementById('panel-'+id).classList.add('active');
+  el.classList.add('active');
+  if(color) el.classList.add(color);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ============ TICKER ============
+const TKR=[
+  {l:'CLIENTES ATIVOS',v:'6.971',c:'nt'},{l:'RECEITA FEV/26',v:'R$823K',c:'up'},
+  {l:'TICKET MÉDIO',v:'R$109,42',c:'nt'},{l:'SALDO 12M',v:'+1.903',c:'up'},
+  {l:'CHURN RATE',v:'3,1%',c:'nt'},{l:'INADIMPLENTES',v:'1.547',c:'dn'},
+  {l:'SALDO INAD.',v:'R$158,2K',c:'dn'},{l:'RECEITA SUSPENSA',v:'R$92,1K',c:'dn'},
+  {l:'CHATS 12M',v:'108.693',c:'nt'},{l:'LIGAÇÕES',v:'4.531',c:'nt'},
+  {l:'TA TEL FEV/26',v:'98,1%',c:'up'},{l:'TMA',v:'46s',c:'up'},
+  {l:'REINCIDÊNCIA',v:'19,4%',c:'dn'},{l:'AUTOMAÇÃO',v:'37,8%',c:'up'},
+  {l:'OS TOTAL',v:'5.914',c:'nt'},{l:'RETENÇÃO 2025',v:'76,2%',c:'up'},
+  {l:'JULIANA EXT.',v:'83,8%',c:'nt'},{l:'TICKET JULIANA',v:'R$97,35',c:'dn'},
+  {l:'TICKET WELLES.',v:'R$112,40',c:'up'},{l:'PROJ 2026',v:'R$11,2M',c:'up'},
+];
+document.getElementById('tkr').innerHTML=[...TKR,...TKR].map(i=>
+  `<div class="ti"><span class="tl">${i.l}</span><span class="${i.c}">${i.v}</span></div>`).join('');
+
+// ============ DATA ============
+const M14=['Jan/25','Fev/25','Mar/25','Abr/25','Mai/25','Jun/25','Jul/25','Ago/25','Set/25','Out/25','Nov/25','Dez/25','Jan/26','Fev/26'];
+const M14S=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez','Jan','Fev'];
+const installs=[206,153,170,179,228,212,201,160,177,253,225,280,276,256];
+const churns=[32,46,82,28,87,64,54,86,74,69,44,55,40,31];
+const saldo=installs.map((v,i)=>v-churns[i]);
+const ticket=[104.29,102.50,100.07,101.72,106.08,106.32,110.21,116.62,103.57,99.26,100.77,100.46,102.82,109.42];
+// Receita real = clientes × ticket
+const recBase=[];let bc=5200;
+saldo.forEach((s,i)=>{bc+=s;recBase.push(Math.round(bc*ticket[i]));});
+// Valor vendido por mês (instalações × ticket)
+const recVend=installs.map((v,i)=>Math.round(v*ticket[i]));
+// Receita perdida por cancelamento
+const recPerdida=[3098,4738,8428,2858,8961,6724,5688,8713,7589,7027,4610,5445,31.024,3228];
+// Cohort
+const cohort=[{y:2020,t:544,a:238,p:43.8},{y:2021,t:859,a:402,p:46.8},{y:2022,t:1172,a:657,p:56.1},{y:2023,t:2164,a:1201,p:55.5},{y:2024,t:1944,a:1239,p:63.7},{y:2025,t:2444,a:1796,p:73.5},{y:2026,t:536,a:490,p:91.4}];
+// Projeção 2026
+const pM=['Mar/26','Abr/26','Mai/26','Jun/26','Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26'];
+const pI=[260,255,245,235,230,220,235,250,255,270];
+const pC=[32,33,34,33,35,38,36,34,33,32];
+const pS=pI.map((v,i)=>v-pC[i]);
+const allM=[...M14,...pM];
+const allClients=[];let runB=5200;
+saldo.forEach(s=>{runB+=s;allClients.push(runB);});
+pS.forEach(s=>{runB+=s;allClients.push(runB);});
+const projRec=allClients.map((c,i)=>Math.round(c*(i<14?ticket[i]:104)));
+
+// Chart defaults
+Chart.defaults.color='#6b6b80';
+Chart.defaults.borderColor='rgba(255,255,255,0.04)';
+Chart.defaults.font.family="'JetBrains Mono',monospace";
+Chart.defaults.font.size=10;
+const TT={backgroundColor:'#111118',borderColor:'#2a2a38',borderWidth:1,titleColor:'#e8e8f0',bodyColor:'#6b6b80',padding:10,cornerRadius:2};
+const bfmt=v=>`R$ ${v.toLocaleString('pt-BR')}`;
+
+// ============ COHORT TABLE ============
+function cc(p){return p<30?'#ef4444':p<50?'#f97316':p<65?'#fbbf24':p<75?'#22c55e':'#06b6d4';}
+const cTbl=document.getElementById('cohortTbl');
+cTbl.innerHTML='<thead><tr><th>Coorte</th><th>Retenção</th><th style="text-align:right">%</th><th>Status</th></tr></thead>';
+const tb=document.createElement('tbody');
+cohort.forEach(c=>{
+  const col=cc(c.p);
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><span class="cyr">${c.y}</span></td>
+    <td><div style="display:flex;align-items:center;gap:7px"><div class="cbar" style="flex:1"><div class="cbf" style="width:${c.p}%;background:${col}"></div></div><span style="font-size:9px;color:var(--muted)">${c.t}</span></div></td>
+    <td><span class="cpct" style="color:${col}">${c.p}%</span></td>
+    <td><span style="font-family:var(--Fm);font-size:9px;color:var(--muted)">${c.p>=80?'▲ Excelente':c.p>=65?'▲ Bom':c.p>=50?'● Regular':'▼ Baixo'}</span></td>`;
+  tb.appendChild(tr);
+});
+cTbl.appendChild(tb);
+
+// ============ CHART HELPERS ============
+function lineChart(id,labels,datasets,opts={}){
+  return new Chart(document.getElementById(id),{type:'line',data:{labels,datasets},options:{responsive:true,plugins:{legend:{display:datasets.length>1,labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,...(opts.tt||{})}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},...(opts.y||{})}}}});
+}
+function barChart(id,labels,datasets,opts={}){
+  return new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets},options:{responsive:true,indexAxis:opts.horiz?'y':'x',plugins:{legend:{display:datasets.length>1,labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT}},scales:{x:{grid:{display:opts.horiz},stacked:opts.stack,...(opts.sx||{})},y:{grid:{color:'rgba(255,255,255,.04)'},stacked:opts.stack,...(opts.sy||{})}}}});
+}
+function doughnut(id,labels,data,colors){
+  return new Chart(document.getElementById(id),{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#111118',borderWidth:3}]},options:{responsive:true,cutout:'62%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:9,font:{size:9}}},tooltip:{...TT}}}});
+}
+
+// ============ GERAL ============
+// Instalações vs cancelamentos + saldo
+new Chart(document.getElementById('g_ic'),{data:{labels:M14,datasets:[
+  {type:'bar',label:'Instalações',data:installs,backgroundColor:'rgba(34,197,94,.7)',borderRadius:2,order:2},
+  {type:'bar',label:'Cancelamentos',data:churns.map(v=>-v),backgroundColor:'rgba(239,68,68,.65)',borderRadius:2,order:2},
+  {type:'line',label:'Saldo',data:saldo,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',borderWidth:2,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#3b82f6',yAxisID:'y2',order:1},
+]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'}},y2:{position:'right',grid:{display:false}}}}});
+lineChart('g_rec',M14,[{label:'Receita',data:recBase,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.08)',borderWidth:2.5,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#22c55e',pointBorderColor:'#0a0a0f',pointBorderWidth:2}],{tt:{callbacks:{label:ctx=>bfmt(ctx.raw)}},y:{ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}});
+doughnut('g_status',['Habilitado','Susp. Débito','Susp. Parcial','Susp. Pedido','Cancelado'],[6186,393,347,166,3334],['#22c55e','#f97316','#fbbf24','#3b82f6','#ef4444']);
+barChart('g_idade',['<18','18–29','30–44','45–59','60+'],[{label:'',data:[3,808,1568,1529,1136],backgroundColor:['#6b6b80','#22c55e','#3b82f6','#f97316','#a855f7'],borderRadius:3}]);
+// Projeção geral
+const hClients=[...allClients.slice(0,14),...Array(10).fill(null)];
+const pClients=[...Array(13).fill(null),allClients[13],...allClients.slice(14)];
+new Chart(document.getElementById('g_proj'),{type:'line',data:{labels:allM,datasets:[
+  {label:'Histórico',data:hClients,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.06)',borderWidth:2.5,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#22c55e'},
+  {label:'Projeção',data:pClients,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.04)',borderWidth:2,borderDash:[6,4],fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#f97316'},
+]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>v.toLocaleString('pt-BR')}}}}});
+
+// ============ COMERCIAL ============
+new Chart(document.getElementById('c_ic'),{type:'bar',data:{labels:M14,datasets:[{label:'Instalações',data:installs,backgroundColor:'rgba(34,197,94,.72)',borderRadius:2,stack:'a'},{label:'Cancelamentos',data:churns.map(v=>-v),backgroundColor:'rgba(239,68,68,.65)',borderRadius:2,stack:'a'}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9}}},y:{stacked:true,grid:{color:'rgba(255,255,255,.04)'}}}}});
+lineChart('c_recvend',M14,[{label:'Receita Vendida',data:recVend,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.08)',borderWidth:2.5,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:recVend.map(v=>v>20000?'#22c55e':v>15000?'#fbbf24':'#f97316'),pointBorderColor:'#0a0a0f',pointBorderWidth:2}],{tt:{callbacks:{label:ctx=>bfmt(ctx.raw)}},y:{ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}});
+lineChart('c_saldo',M14,[{label:'Saldo',data:saldo,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',borderWidth:2.5,fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:saldo.map(v=>v>=200?'#22c55e':v>=100?'#f97316':'#fbbf24'),pointBorderColor:'#0a0a0f',pointBorderWidth:2}]);
+lineChart('c_ticket',M14,[{label:'Ticket Médio',data:ticket,borderColor:'#fbbf24',backgroundColor:'rgba(251,191,36,.08)',borderWidth:2.5,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#fbbf24',pointBorderColor:'#0a0a0f',pointBorderWidth:2}],{tt:{callbacks:{label:ctx=>`R$ ${ctx.raw.toFixed(2)}`}},y:{min:95,ticks:{callback:v=>`R$${v}`}}});
+doughnut('c_planos',['R$99,90','R$99','R$79,90','R$149','R$74,90','R$129,90','Outros'],[2927,2248,1004,750,776,420,301],['#f97316','#3b82f6','#22c55e','#a855f7','#ef4444','#fbbf24','#6b6b80']);
+doughnut('c_cancel',['Inadimplência','Troca Titular','Inviab. Técnica','Mudança Cidade','Mud. Provedor','Insatisfação','N/A'],[835,170,145,69,41,10,2050],['#ef4444','#f97316','#fbbf24','#3b82f6','#a855f7','#22c55e','#3a3a4a']);
+barChart('c_rec_bairro',['Cravinhos·Centro','RP·Jardim Paulista','Pedro T.·Centro','RP·Campos Elíseos','RP·Alto da Boa Vista','RP·Ipiranga','RP·Jardim Independência','RP·Vila Tibério','Bias F.·Centro','RP·Sumarezinho'],[{label:'Receita Mensal',data:[29302,27036,25375,22364,22038,22025,21911,21858,17344,16842],backgroundColor:'rgba(249,115,22,.7)',borderRadius:3}],{horiz:true,sx:{ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}});
+barChart('c_susp_bairro',['Cravinhos·Centro','RP·Sumarezinho','RP·Ipiranga','RP·Quintino Facci','RP·Vila Tibério','Bias F.'],[{label:'% Suspensos',data:[25.9,20.2,15.1,16.9,14.9,9.1],backgroundColor:['#ef4444','#ef4444','#f97316','#f97316','#fbbf24','#22c55e'],borderRadius:3}],{sy:{ticks:{callback:v=>`${v}%`}}});
+// Vendedores externos mês a mês
+new Chart(document.getElementById('c_vend_mes'),{type:'bar',data:{labels:['Out/25','Nov/25','Dez/25','Jan/26','Fev/26'],datasets:[{label:'Juliana',data:[44,40,44,54,46],backgroundColor:'rgba(249,115,22,.75)',borderRadius:2,stack:'a'},{label:'Marcelo',data:[0,10,21,13,0],backgroundColor:'rgba(59,130,246,.65)',borderRadius:2,stack:'a'}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'rgba(255,255,255,.04)'}}}}});
+new Chart(document.getElementById('c_vend_val'),{type:'bar',data:{labels:['Out/25','Nov/25','Dez/25','Jan/26','Fev/26'],datasets:[{label:'Juliana',data:[4055.2,2617.5,4455.6,5474.6,4595.4],backgroundColor:'rgba(249,115,22,.7)',borderRadius:2},{label:'Marcelo',data:[0,999,2197.9,1318.7,0],backgroundColor:'rgba(59,130,246,.6)',borderRadius:2}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>bfmt(ctx.raw)}}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`R$${(v/1000).toFixed(1)}K`}}}}});
+doughnut('c_planos_ext',['500 Mega','350 Mega','650 Mega','850 Mega','100 Mega','Outros'],[116,60,40,16,6,34],['#22c55e','#f97316','#3b82f6','#a855f7','#fbbf24','#6b6b80']);
+barChart('c_rec_perdida',M14,[{label:'Receita Perdida',data:recPerdida,backgroundColor:recPerdida.map(v=>v>8000?'rgba(239,68,68,.8)':v>5000?'rgba(249,115,22,.7)':'rgba(251,191,36,.65)'),borderRadius:3}],{sy:{ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}});
+// Projeção com recuperação
+const recComRec=recBase.map((v,i)=>i>=12?v+36900:v);
+new Chart(document.getElementById('c_proj_rec'),{type:'line',data:{labels:M14,datasets:[{label:'Sem Recuperação',data:recBase,borderColor:'#6b6b80',borderWidth:1.5,borderDash:[4,3],tension:0.4,pointRadius:2},{label:'Com Recuperação 40%',data:recComRec,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.06)',borderWidth:2,fill:true,tension:0.4,pointRadius:2,pointBackgroundColor:'#22c55e'}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>bfmt(ctx.raw)}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}});
+
+
+
+// ============ SETOR COMERCIAL MIX ============
+const mMix = ['Mar/26','Abr/26','Mai/26','Jun/26','Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26','Jan/27','Fev/27'];
+const recMixBase    = [803012,837869,870834,902183,932148,960927,988689,1015578,1041714,1067201,1092128,1116569];
+const recSemComercial = Array(12).fill(823417);
+
+// Composição interna por função
+const recReativ = Array(12).fill(14097);
+const recCancel = Array(12).fill(3480);
+const recUpgrade = Array(12).fill(6646);
+const recInbound = Array(12).fill(8402);
+const recExterno = Array(12).fill(13277);
+
+new Chart(document.getElementById('c_mix_base'), {
+  type: 'line',
+  data: {
+    labels: mMix,
+    datasets: [
+      {label:'Sem Comercial', data:recSemComercial, borderColor:'#6b6b80', borderWidth:1.5, borderDash:[5,4], tension:0, pointRadius:0, fill:false},
+      {label:'Com Mix Comercial', data:recMixBase, borderColor:'#f97316', backgroundColor:'rgba(249,115,22,.08)', borderWidth:2.5, fill:true, tension:0.35, pointRadius:3, pointBackgroundColor:'#f97316', pointBorderColor:'#0a0a0f', pointBorderWidth:2},
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>bfmt(ctx.raw)}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}
+});
+
+new Chart(document.getElementById('c_mix_comp'), {
+  type: 'bar',
+  data: {
+    labels: mMix,
+    datasets: [
+      {label:'Reativação Suspensos', data:recReativ,  backgroundColor:'rgba(249,115,22,.8)',  borderRadius:2, stack:'a'},
+      {label:'Recuperação Cancelados',data:recCancel, backgroundColor:'rgba(251,191,36,.75)', borderRadius:2, stack:'a'},
+      {label:'Upgrade de Plano',     data:recUpgrade, backgroundColor:'rgba(59,130,246,.75)', borderRadius:2, stack:'a'},
+      {label:'Receptivo Inbound',    data:recInbound, backgroundColor:'rgba(168,85,247,.7)',  borderRadius:2, stack:'a'},
+      {label:'Externo (novas vendas)',data:recExterno, backgroundColor:'rgba(34,197,94,.75)',  borderRadius:2, stack:'a'},
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>bfmt(ctx.raw)}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9}}},y:{stacked:true,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}
+});
+
+// Payback
+const acumCustoMix = mMix.map((_,i)=>(i+1)*20340);
+const acumRecMix   = mMix.map((_,i)=>(i+1)*45902);
+new Chart(document.getElementById('c_mix_pay'), {
+  type: 'line',
+  data: {
+    labels: mMix,
+    datasets: [
+      {label:'Custo Acumulado',   data:acumCustoMix, borderColor:'#ef4444', borderWidth:2, borderDash:[5,3], fill:false, tension:0, pointRadius:3, pointBackgroundColor:'#ef4444'},
+      {label:'Receita Acumulada', data:acumRecMix,   borderColor:'#22c55e', backgroundColor:'rgba(34,197,94,.07)', borderWidth:2.5, fill:true, tension:0, pointRadius:3, pointBackgroundColor:'#22c55e'},
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>bfmt(ctx.raw)}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}
+});
+
+// ============ CANAL DE AQUISIÇÃO ============
+// Evolução mensal por canal (Nov/25 → Mar/26)
+new Chart(document.getElementById('c_canal_mes'), {
+  type: 'bar',
+  data: {
+    labels: ['Nov/25','Dez/25','Jan/26','Fev/26','Mar/26'],
+    datasets: [
+      {label:'Vendedor Externo', data:[24,36,17,25,4],  backgroundColor:'rgba(34,197,94,.75)',  borderRadius:3, stack:'a'},
+      {label:'Indicação',        data:[20,30,7,24,2],   backgroundColor:'rgba(59,130,246,.75)', borderRadius:3, stack:'a'},
+      {label:'Panfleto',         data:[0,0,1,24,4],     backgroundColor:'rgba(251,191,36,.75)', borderRadius:3, stack:'a'},
+      {label:'Instagram',        data:[4,1,3,4,1],      backgroundColor:'rgba(168,85,247,.75)', borderRadius:3, stack:'a'},
+      {label:'Presencial/Outros',data:[0,0,0,1,1],      backgroundColor:'rgba(6,182,212,.65)',  borderRadius:3, stack:'a'},
+    ]
+  },
+  options: {
+    responsive:true,
+    plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT}},
+    scales:{
+      x:{stacked:true, grid:{display:false}, ticks:{font:{size:9}}},
+      y:{stacked:true, grid:{color:'rgba(255,255,255,.04)'}}
+    }
+  }
+});
+
+doughnut('c_canal_mix',
+  ['Vendedor Externo','Indicação','Panfleto','Instagram','Presencial','Facebook'],
+  [106,83,29,13,1,1],
+  ['#22c55e','#3b82f6','#fbbf24','#a855f7','#06b6d4','#ef4444']
+);
+
+// Taxa de retenção por canal
+new Chart(document.getElementById('c_canal_ret'), {
+  type: 'bar',
+  data: {
+    labels: ['Instagram','Indicação','Panfleto','Vend. Externo','Não Informado'],
+    datasets: [{
+      label: '% Ativos',
+      data: [100, 98.8, 96.6, 94.3, 22.9],
+      backgroundColor: [
+        'rgba(168,85,247,.8)','rgba(59,130,246,.8)',
+        'rgba(251,191,36,.75)','rgba(34,197,94,.75)',
+        'rgba(107,107,128,.5)'
+      ],
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive:true, indexAxis:'y',
+    plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:ctx=>`${ctx.raw}%`}}},
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,.04)'},max:105,ticks:{callback:v=>`${v}%`}},
+      y:{grid:{display:false}}
+    }
+  }
+});
+
+// Canal por cidade
+new Chart(document.getElementById('c_canal_cidade'), {
+  type: 'bar',
+  data: {
+    labels: ['Ribeirão Preto','Sertãozinho','Cravinhos','Serrana','S. Rita Ibitipoca','Jardinópolis','Bonfim Paulista'],
+    datasets: [
+      {label:'Vend. Externo', data:[86,9,10,0,1,0,0],  backgroundColor:'rgba(34,197,94,.75)',  borderRadius:2, stack:'a'},
+      {label:'Indicação',     data:[62,5,5,6,2,0,3],   backgroundColor:'rgba(59,130,246,.75)', borderRadius:2, stack:'a'},
+      {label:'Panfleto',      data:[14,3,7,0,2,1,2],   backgroundColor:'rgba(251,191,36,.75)', borderRadius:2, stack:'a'},
+      {label:'Instagram',     data:[4,7,2,0,0,0,0],    backgroundColor:'rgba(168,85,247,.75)', borderRadius:2, stack:'a'},
+    ]
+  },
+  options: {
+    responsive:true,
+    plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT}},
+    scales:{
+      x:{stacked:true, grid:{display:false}, ticks:{font:{size:9},maxRotation:30}},
+      y:{stacked:true, grid:{color:'rgba(255,255,255,.04)'}}
+    }
+  }
+});
+
+// ============ FINANCEIRO ============
+const fMeses=['Jun/25','Jul/25','Ago/25','Set/25','Out/25','Nov/25'];
+new Chart(document.getElementById('f_comp'),{type:'bar',data:{labels:fMeses,datasets:[{label:'Adimplentes',data:[5103,5261,5396,6980,11192,5278],backgroundColor:'rgba(34,197,94,.65)',borderRadius:2,stack:'a'},{label:'Inadimplentes',data:[85,80,86,185,256,98],backgroundColor:'rgba(239,68,68,.75)',borderRadius:2,stack:'a'}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'rgba(255,255,255,.04)'}}}}});
+new Chart(document.getElementById('f_saldos'),{type:'bar',data:{labels:fMeses,datasets:[{label:'Saldo Pago (R$)',data:[537605,553908,569865,737772,1185310,558301],backgroundColor:'rgba(34,197,94,.6)',borderRadius:2},{label:'Saldo Aberto (R$)',data:[9832,8442,9308,20815,25662,9384],backgroundColor:'rgba(239,68,68,.75)',borderRadius:2}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>bfmt(ctx.raw)}}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}});
+new Chart(document.getElementById('f_inad_mes'),{type:'bar',data:{labels:fMeses,datasets:[{label:'Clientes',data:[85,80,86,185,256,98],backgroundColor:'rgba(239,68,68,.75)',borderRadius:3,yAxisID:'y'},{label:'Saldo (R$)',data:[9832,8442,9308,20815,25662,9384],backgroundColor:'rgba(249,115,22,.5)',borderRadius:3,yAxisID:'y2'}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,.04)'}},y2:{position:'right',grid:{display:false},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}});
+doughnut('f_aging',['91–180 dias','180+ dias'],[528,262],['#f97316','#ef4444']);
+new Chart(document.getElementById('f_plano'),{type:'bar',data:{labels:['R$74,90','R$79,90','R$99','R$99,90','R$129,90','R$149'],datasets:[{label:'Clientes',data:[190,114,217,566,98,112],backgroundColor:'rgba(239,68,68,.7)',borderRadius:3,yAxisID:'y'},{label:'Saldo (R$)',data:[14727,9343,22575,59883,14365,16532],backgroundColor:'rgba(249,115,22,.45)',borderRadius:3,yAxisID:'y2'}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,.04)'}},y2:{position:'right',grid:{display:false},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}});
+doughnut('f_faixas',['até R$100','R$101–300','R$301–600'],[1008,362,10],['#fbbf24','#f97316','#ef4444']);
+// Fluxo financeiro + projeção
+const histRec=[...recBase,...Array(10).fill(null)];
+const projRecArr=[...Array(13).fill(null),recBase[13],...projRec.slice(14)];
+new Chart(document.getElementById('f_fluxo'),{type:'line',data:{labels:allM,datasets:[{label:'Receita Real',data:histRec,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.07)',borderWidth:2.5,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#22c55e'},{label:'Projeção 2026',data:projRecArr,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.04)',borderWidth:2,borderDash:[6,4],fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#f97316'}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>ctx.raw?bfmt(ctx.raw):''}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}});
+// Projeção com vs sem recuperação
+const semRec=projRec.slice(14);
+const comRec=semRec.map(v=>v+36900);
+new Chart(document.getElementById('f_proj_comp'),{type:'line',data:{labels:pM,datasets:[{label:'Sem Recuperação',data:semRec,borderColor:'#6b6b80',borderWidth:1.5,borderDash:[4,3],tension:0.4,pointRadius:2},{label:'Com Recuperação 40%',data:comRec,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.08)',borderWidth:2,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#22c55e'}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>bfmt(ctx.raw)}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}});
+
+// ============ ATENDIMENTO ============
+// Total contatos por atendente - Chat + Tel (mapeamento correto ramais)
+const atend_names=['Rafael','Camila','Priscila','Larissa','Beatriz/e','Eduardo','Juliana','Juliana','Rodrigo'];
+const atend_chat=[14809,11154,9698,8683,7071,6774,4154,751,508];
+const atend_tel=[267,39,224,239,203,273,0,0,0]; // Rafael=104, Camila=103, Priscila=100, Larissa=107, Beatriz=101, Eduardo=105
+new Chart(document.getElementById('a_total_cont'),{type:'bar',data:{labels:atend_names,datasets:[{label:'Chat',data:atend_chat,backgroundColor:'rgba(168,85,247,.75)',borderRadius:2,stack:'a'},{label:'Telefone',data:atend_tel,backgroundColor:'rgba(59,130,246,.7)',borderRadius:2,stack:'a'}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'rgba(255,255,255,.04)'}}}}});
+lineChart('a_chat',['Jan/25','Fev/25','Mar/25','Abr/25','Mai/25','Jun/25','Jul/25','Ago/25','Set/25','Out/25','Nov/25','Dez/25','Jan/26','Fev/26'],[{label:'Total Chats',data:[6710,6114,6415,6404,7466,5898,6284,6249,6038,7739,7239,8265,7983,7742],borderColor:'#a855f7',backgroundColor:'rgba(168,85,247,.08)',borderWidth:2.5,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#a855f7',pointBorderColor:'#0a0a0f',pointBorderWidth:2}]);
+barChart('a_chat_dia',['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'],[{data:[19101,17014,17071,14682,16278,9948,3148],backgroundColor:['#a855f7','#a855f7','#a855f7','#a855f7','#a855f7','#6b6b80','#4a4a5a'],borderRadius:3}]);
+doughnut('a_depto',['Atendimento','Financeiro','Suporte Técnico','Comercial'],[37755,10111,447,244],['#a855f7','#ef4444','#3b82f6','#22c55e']);
+doughnut('a_reinc',['1 contato','2–4','5–10','11++'],[2448,2436,2079,2757],['#22c55e','#3b82f6','#fbbf24','#ef4444']);
+// Telefone operadores com mapeamento correto
+const tel_names=['Eduardo(105)','Rafael(104)','Larissa(107)','Priscila(100)','Beatriz(101)','Camila(103)','Thiago(102)'];
+const tel_total=[273,267,239,224,203,39,5];
+const tel_atend=[243,251,180,191,158,31,3];
+const tel_ta=[89.0,94.0,75.3,85.3,77.8,79.5,60.0];
+const tel_tma=[146,178,142,121,118,42,37];
+barChart('a_tel_op',tel_names,[{label:'Total',data:tel_total,backgroundColor:'rgba(59,130,246,.5)',borderRadius:2},{label:'Atendidas',data:tel_atend,backgroundColor:'rgba(34,197,94,.75)',borderRadius:2}]);
+new Chart(document.getElementById('a_tel_tma'),{type:'bar',data:{labels:tel_names,datasets:[{label:'TMA (s)',data:tel_tma,backgroundColor:'rgba(249,115,22,.7)',borderRadius:2,yAxisID:'y'},{label:'TA (%)',data:tel_ta,backgroundColor:'rgba(34,197,94,.5)',borderRadius:2,yAxisID:'y2'}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`${v}s`}},y2:{position:'right',grid:{display:false},ticks:{callback:v=>`${v}%`}}}}});
+const horaL=Object.keys({7:31,8:371,9:395,10:325,11:373,12:370,13:397,14:708,15:418,16:265,17:211,18:63,19:33,20:24}).map(h=>`${h}h`);
+const horaD=Object.values({7:31,8:371,9:395,10:325,11:373,12:370,13:397,14:708,15:418,16:265,17:211,18:63,19:33,20:24});
+barChart('a_tel_hora',horaL,[{data:horaD,backgroundColor:horaD.map(v=>v>=600?'rgba(239,68,68,.82)':v>=350?'rgba(249,115,22,.75)':'rgba(59,130,246,.6)'),borderRadius:3}]);
+barChart('a_tel_dia',['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'],[{data:[671,471,493,541,1071,707,54],backgroundColor:['#3b82f6','#3b82f6','#3b82f6','#3b82f6','#ef4444','#f97316','#6b6b80'],borderRadius:3}]);
+new Chart(document.getElementById('a_tel_comp'),{type:'bar',data:{labels:['Total','Atendidas','Não Atend.'],datasets:[{label:'Nov/25',data:[1874,1160,714],backgroundColor:'rgba(249,115,22,.7)',borderRadius:2},{label:'Fev/26',data:[2134,2079,55],backgroundColor:'rgba(59,130,246,.7)',borderRadius:2}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,.04)'}}}}});
+doughnut('a_fila',['Fila Padrão','Sem Fila','Suporte Téc.','Financeiro','Comercial'],[1547,1461,550,258,190],['#3b82f6','#6b6b80','#f97316','#ef4444','#22c55e']);
+new Chart(document.getElementById('a_tma_fila'),{type:'bar',data:{labels:['Fila Padrão','Financeiro','Suporte Téc.','Comercial'],datasets:[{label:'TMA(s)',data:[60,55,35,27],backgroundColor:'rgba(59,130,246,.7)',borderRadius:2},{label:'TME(s)',data:[73,72,79,81],backgroundColor:'rgba(249,115,22,.5)',borderRadius:2}]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`${v}s`}}}}});
+const osMes=[385,334,286,247,312,303,351,358,307,431,443,674,433,340];
+barChart('a_os_mes',['Jan/25','Fev/25','Mar/25','Abr/25','Mai/25','Jun/25','Jul/25','Ago/25','Set/25','Out/25','Nov/25','Dez/25','Jan/26','Fev/26'],[{data:osMes,backgroundColor:osMes.map(v=>v>=600?'rgba(239,68,68,.85)':v>=400?'rgba(249,115,22,.75)':'rgba(59,130,246,.65)'),borderRadius:3}]);
+barChart('a_os_dia',['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'],[{data:[834,925,1045,891,904,597,28],backgroundColor:['#f97316','#f97316','#ef4444','#fbbf24','#fbbf24','#3b82f6','#6b6b80'],borderRadius:3}],{sy:{ticks:{callback:v=>v.toLocaleString('pt-BR')}}});
+barChart('a_os_tipo',['Sem Acesso','Suporte','Roteador','Lentidão','Trans. Endereço','Oscilação','Cab. Arreben.'],[{data:[2065,1082,733,558,384,259,126],backgroundColor:['#ef4444','#f97316','#fbbf24','#3b82f6','#22c55e','#a855f7','#06b6d4'],borderRadius:3}],{horiz:true});
+doughnut('a_os_tec',['Bruno Alves','Thiago Ramos','Outros'],[4594,671,17],['#ef4444','#f97316','#6b6b80']);
+// Ratio resolução interna - decrescente
+const ratioNames=['Rafael','Sabrina','Juliana','Priscila','Rodrigo','Larissa','Eduardo','Juliana','Camila','Beatriz'];
+const ratioVals=[31.0,24.1,22.1,17.0,13.0,10.9,10.0,9.6,9.2,7.6];
+barChart('a_ratio',ratioNames,[{data:ratioVals,backgroundColor:ratioVals.map(v=>v>=20?'rgba(34,197,94,.8)':v>=12?'rgba(251,191,36,.75)':v>=9?'rgba(249,115,22,.7)':'rgba(239,68,68,.7)'),borderRadius:3}],{sy:{ticks:{callback:v=>`${v}x`}}});
+
+
+// ============ VOLUME 12M POR ATENDENTE ============
+const m12 = ['Mar/25','Abr/25','Mai/25','Jun/25','Jul/25','Ago/25','Set/25','Out/25','Nov/25','Dez/25','Jan/26','Fev/26'];
+const vol12_chat = {
+  'Rafael':      [991,909,902,890,945,844,1032,1421,1174,1242,1257,1027],
+  'Camila':      [809,837,446,638,884,849,772,1060,1021,1144,1085,621],
+  'Priscila':      [627,574,901,574,682,581,422,942,1038,1102,827,701],
+  'Larissa':    [567,689,787,599,723,591,563,478,612,580,661,601],
+  'Beatriz': [449,536,567,472,449,439,546,561,530,626,233,455],
+  'Eduardo':   [332,332,828,200,229,373,355,592,404,864,734,634],
+  'Juliana':      [415,354,305,389,262,293,138,113,164,60,163,75],
+};
+const vol12_tel = {
+  'Rafael':      [0,0,0,0,0,0,0,0,214,0,0,53],
+  'Camila':      [0,0,0,0,0,0,0,0,4,0,0,35],
+  'Priscila':      [0,0,0,0,0,0,0,0,161,0,0,63],
+  'Larissa':    [0,0,0,0,0,0,0,0,106,0,0,133],
+  'Beatriz': [0,0,0,0,0,0,0,0,158,0,0,45],
+  'Eduardo':   [0,0,0,0,0,0,0,0,160,0,0,113],
+  'Juliana':      [0,0,0,0,0,0,0,0,0,0,0,0],
+};
+const vol12_colors = ['#f97316','#a855f7','#3b82f6','#22c55e','#fbbf24','#06b6d4','#ef4444'];
+const vol12_names  = ['Rafael','Camila','Priscila','Larissa','Beatriz','Eduardo','Juliana'];
+
+const vol12_datasets = vol12_names.map((nome, i) => {
+  const total = vol12_chat[nome].map((c,j) => c + vol12_tel[nome][j]);
+  return {
+    label: nome,
+    data: total,
+    borderColor: vol12_colors[i],
+    backgroundColor: vol12_colors[i] + '18',
+    borderWidth: 2,
+    fill: false,
+    tension: 0.35,
+    pointRadius: 3,
+    pointBackgroundColor: vol12_colors[i],
+    pointBorderColor: '#0a0a0f',
+    pointBorderWidth: 1.5,
+  };
+});
+
+new Chart(document.getElementById('a_vol12'), {
+  type: 'line',
+  data: { labels: m12, datasets: vol12_datasets },
+  options: {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 11, padding: 14, font: { size: 10 } } },
+      tooltip: {
+        ...TT,
+        callbacks: {
+          label: ctx => ` ${ctx.dataset.label}: ${ctx.raw.toLocaleString('pt-BR')} atend.`,
+          footer: items => {
+            const total = items.reduce((s,i) => s + i.raw, 0);
+            return `Total equipe: ${total.toLocaleString('pt-BR')}`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { font: { size: 9 } } },
+      y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { font: { size: 9 }, callback: v => v.toLocaleString('pt-BR') } }
+    }
+  }
+});
+
+// ============ COMISSÃO ============
+barChart('k_cont',['Rafael','Camila','Priscila','Larissa','Eduardo','Beatriz','Juliana'],[{label:'Chat',data:[14809,11154,9698,8683,6774,7071,4154],backgroundColor:'rgba(168,85,247,.7)',borderRadius:2,stack:'a'},{label:'Telefone',data:[267,39,224,239,273,203,0],backgroundColor:'rgba(59,130,246,.6)',borderRadius:2,stack:'a'}],{stack:true,sy:{ticks:{callback:v=>v.toLocaleString('pt-BR')}}});
+barChart('k_ratio',['Rafael','Sabrina','Juliana','Priscila','Rodrigo','Larissa','Eduardo','Juliana','Camila','Beatriz'],[{data:[30.5,24.1,22.1,16.7,13.0,10.6,9.6,9.6,9.2,7.4],backgroundColor:ratioVals.map(v=>v>=20?'rgba(34,197,94,.8)':v>=12?'rgba(251,191,36,.75)':v>=9?'rgba(249,115,22,.7)':'rgba(239,68,68,.7)'),borderRadius:3}],{sy:{ticks:{callback:v=>`${v}x`}}});
+</script>
+</body>
+</html>
