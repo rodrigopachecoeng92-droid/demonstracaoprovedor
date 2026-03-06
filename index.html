@@ -69,6 +69,53 @@ const saldo=[];let s=95000;
 entradas.forEach((e,i)=>{s+=e;s-=saidas[i];saldo.push(s);});
 lineChart('e_saldo',m12cap,[{label:'Saldo em Estoque (R$)',data:saldo,borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.08)',borderWidth:2.5,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#06b6d4',pointBorderColor:'#0a0a0f',pointBorderWidth:2}],{y:{ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}});
 
+
+// ============ REDE & MERCADO ============
+const rBairros = ['Jd.Paulista','Ipiranga','Sumarezinho','Campos El.','Alto B.V.','Vila Tibério','Jd.Indep.','Ribeirânia','Q.Facci','Sta Cruz','Crav·Ctr','Sertãoz.','Jardnóp.','Serrana','Crav·DI'];
+const rPortas   = [1200,980,860,740,680,720,640,520,480,420,860,540,620,480,320];
+const rClientes = [267,213,174,203,196,206,208,131,147,129,329,121,249,130,82];
+const rLivres   = rPortas.map((p,i)=>p-rClientes[i]);
+const rPot      = [4153,3397,2906,2387,2219,2264,2032,1889,1613,1451,1691,1519,1231,1175,748];
+const rPen      = [5.6,5.5,5.1,7.2,7.5,7.6,8.7,6.0,7.7,7.6,15.0,6.7,15.6,9.3,9.1];
+const rOcup     = [22.2,21.7,20.2,27.4,28.8,28.6,32.5,25.2,30.6,30.7,38.3,22.4,40.2,27.1,25.6];
+const rMS       = [41.3,42.3,35.2,49.2,51.4,47.2,56.5,42.1,51.2,51.8,64.6,43.1,67.5,57.8,53.9];
+const rConc     = [380,290,320,210,185,230,160,180,140,120,180,160,120,95,70];
+
+// Portas — empilhado clientes + livres + potencial
+new Chart(document.getElementById('r_portas'),{type:'bar',data:{labels:rBairros,datasets:[
+  {label:'Clientes Ativos', data:rClientes, backgroundColor:'rgba(34,197,94,.8)',   borderRadius:2, stack:'a'},
+  {label:'Portas Livres',   data:rLivres,   backgroundColor:'rgba(107,107,128,.35)',borderRadius:2, stack:'a'},
+  {label:'Potencial (sem internet est.)', data:rPot, backgroundColor:'rgba(59,130,246,.25)', borderRadius:2, stack:'b'},
+]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9},maxRotation:35}},y:{stacked:true,grid:{color:'rgba(255,255,255,.04)'}}}}});
+
+// Penetração horizontal
+barChart('r_pen',rBairros,[{label:'Penetração %',data:rPen,
+  backgroundColor:rPen.map(v=>v>=15?'rgba(34,197,94,.8)':v>=10?'rgba(251,191,36,.75)':'rgba(249,115,22,.7)'),
+  borderRadius:3}],{horiz:true,sx:{ticks:{callback:v=>`${v}%`},max:20}});
+
+// Ocupação horizontal
+barChart('r_ocup',rBairros,[{label:'Ocupação %',data:rOcup,
+  backgroundColor:rOcup.map(v=>v>=85?'rgba(239,68,68,.85)':v>=70?'rgba(251,191,36,.75)':'rgba(59,130,246,.7)'),
+  borderRadius:3}],{horiz:true,sx:{ticks:{callback:v=>`${v}%`},max:60}});
+
+// Market Share empilhado FibraLink vs Concorrência
+const msConc = rMS.map((_,i)=>parseFloat((100-rMS[i]).toFixed(1)));
+new Chart(document.getElementById('r_ms'),{type:'bar',data:{labels:rBairros,datasets:[
+  {label:'FibraLink',    data:rMS,   backgroundColor:'rgba(34,197,94,.78)',  borderRadius:2, stack:'a'},
+  {label:'Concorrência', data:msConc,backgroundColor:'rgba(239,68,68,.45)', borderRadius:2, stack:'a'},
+]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw}%`}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9},maxRotation:35}},y:{stacked:true,max:100,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>`${v}%`}}}}});
+
+// Potencial
+barChart('r_pot',rBairros,[{label:'Domicílios sem internet',data:rPot,
+  backgroundColor:rPot.map(v=>v>=3000?'rgba(249,115,22,.8)':v>=1500?'rgba(251,191,36,.7)':'rgba(59,130,246,.6)'),
+  borderRadius:3}],{horiz:true});
+
+// Planos
+new Chart(document.getElementById('r_planos'),{type:'bar',data:{labels:['350 Mega','500 Mega','700 Mega','1 Giga','2 Giga'],datasets:[
+  {label:'Clientes',data:[1130,3294,1129,843,575],backgroundColor:'rgba(59,130,246,.7)',borderRadius:3,yAxisID:'y'},
+  {label:'Receita/mês',data:[90287,329071,124077,126366,109192],backgroundColor:'rgba(34,197,94,.55)',borderRadius:3,yAxisID:'y2'},
+]},options:{responsive:true,plugins:{legend:{labels:{boxWidth:10,font:{size:9}}},tooltip:{...TT,callbacks:{label:ctx=>ctx.datasetIndex===1?bfmt(ctx.raw):`${ctx.raw} clientes`}}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,.04)'}},y2:{position:'right',grid:{display:false},ticks:{callback:v=>`R$${(v/1000).toFixed(0)}K`}}}}});
+
 </script>
 <style>
 :root{--bg:#0a0a0f;--card:#111118;--card2:#16161f;--border:#2a2a38;--border2:#1e1e2a;
@@ -286,27 +333,37 @@ table.dt tr:hover td{background:rgba(255,255,255,.01)}
 .est-ok{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25)}
 .est-alerta{background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.25)}
 .est-critico{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+
+.heat-ok{background:rgba(34,197,94,.12);color:var(--green)}
+.heat-med{background:rgba(251,191,36,.12);color:var(--amber)}
+.heat-low{background:rgba(239,68,68,.12);color:var(--red)}
+.heat-high{background:rgba(6,182,212,.12);color:var(--cyan)}
+.spark{display:inline-flex;align-items:flex-end;gap:2px;height:28px}
+.spark span{width:5px;border-radius:1px;background:var(--orange);opacity:.7}
+.kpi-extra{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.kpi-ex-card{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:16px;display:flex;gap:14px;align-items:center}
+.kpi-ex-icon{font-size:26px;flex-shrink:0}
+.kpi-ex-val{font-family:var(--Fd);font-size:28px;line-height:1;margin-bottom:2px}
+.kpi-ex-lbl{font-family:var(--Fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.kpi-ex-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.bench{display:inline-block;font-family:var(--Fm);font-size:8px;padding:1px 6px;border-radius:2px;margin-top:4px}
+.bench-ok{background:rgba(34,197,94,.12);color:var(--green)}.bench-warn{background:rgba(251,191,36,.12);color:var(--amber)}.bench-bad{background:rgba(239,68,68,.12);color:var(--red)}
 </style>
 </head>
 <body>
 <nav class="nav">
   <div class="nav-brand">FibraLink</div>
-  <div class="nav-tabs">
-    <div class="nav-tab active" onclick="sw('geral',this)">🏢 Geral <span class="nbadge">Saúde</span></div>
+    <div class="nav-tabs">
+    <div class="nav-tab active" onclick="sw('visao',this)">📊 Visão Geral</div>
     <div class="nav-tab" onclick="sw('comercial',this,'G')">📈 Comercial <span class="nbadge G">Vendas</span></div>
-    <div class="nav-tab" onclick="sw('financeiro',this,'B')">💰 Financeiro <span class="nbadge B">Inadimp.</span></div>
-    <div class="nav-tab" onclick="sw('atendimento',this,'P')">🎧 Atendimento <span class="nbadge P">360°</span></div>
-    <div class="nav-tab" onclick="sw('comissao',this,'C')">⭐ Comissionamento <span class="nbadge C">KPIs</span></div>
-    <div class="nav-tab" onclick="sw('financeiro2',this,'A')">💳 Contas a Pagar <span class="nbadge A" style="background:rgba(239,68,68,.15);color:#ef4444">DRE</span></div>
-    <div class="nav-tab" onclick="sw('estoque',this,'E')">📦 Estoque <span class="nbadge E" style="background:rgba(6,182,212,.15);color:#06b6d4">Inventário</span></div>
+    <div class="nav-tab" onclick="sw('financeiro',this,'B')">💰 Financeiro <span class="nbadge B">DRE</span></div>
+    <div class="nav-tab" onclick="sw('operacoes',this,'P')">🎧 Operações <span class="nbadge P">Atend · OS · Estoque</span></div>
+    <div class="nav-tab" onclick="sw('rede',this,'C')">🗺️ Rede &amp; Mercado <span class="nbadge C" style="background:rgba(34,197,94,.15);color:#22c55e">Cobertura</span></div>
   </div>
 </nav>
 <div class="ticker"><div class="ticker-inner" id="tkr"></div></div>
 
-<!-- ═══════════════════════════════════════════════════
-     PAINEL GERAL
-═══════════════════════════════════════════════════ -->
-<div class="panel active" id="panel-geral">
+<div class="panel active" id="panel-visao">
 <section class="hero hero-o">
   <div class="wrap">
     <div class="ey ey-o">FibraLink Telecom · Visão Gerencial · 11.843 cadastros reais</div>
@@ -322,6 +379,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.01)}
   </div>
 </section>
 <div class="div"></div>
+<section><div class="wrap">
 <section>
 <div class="wrap">
   <div class="st">Crescimento &amp; <span class="acc">Base</span></div>
@@ -365,11 +423,96 @@ table.dt tr:hover td{background:rgba(255,255,255,.01)}
   <div class="cc"><div class="cct"><strong>Base de Clientes — Histórico + Projeção 2026</strong><span>Linha tracejada = estimativa</span></div><canvas id="g_proj" style="max-height:260px"></canvas></div>
 </div>
 </section>
+
+  <div class="st mt3">Painel de <span class="acc">Comissionamento</span> &amp; KPIs Estratégicos</div>
+  <div class="note" style="margin-bottom:16px">Indicadores-chave para tomada de decisão e definição de metas de comissão por área. Atualizado mensalmente.</div>
+  
+  <div class="st">KPIs <span class="acc">Comercial Interno</span> — Vendedores &amp; Atendentes</div>
+  <div class="com-grid">
+    <div class="com-card ok"><div class="com-label">Instalações/Mês</div><div class="com-val" style="color:var(--green)">186</div><div class="com-meta">Média Jan/25→Fev/26</div><span class="com-status ok">▲ Meta: 200</span></div>
+    <div class="com-card warn"><div class="com-label">Churn Rate</div><div class="com-val" style="color:var(--amber)">3,1%</div><div class="com-meta">807 / 21 meses base</div><span class="com-status warn">⚠ Meta: &lt;3%</span></div>
+    <div class="com-card ok"><div class="com-label">Saldo Líquido</div><div class="com-val" style="color:var(--green)">+136</div><div class="com-meta">Média mensal real</div><span class="com-status ok">▲ Meta: &gt;120</span></div>
+    <div class="com-card ok"><div class="com-label">Ticket Médio</div><div class="com-val" style="color:var(--green)">R$103</div><div class="com-meta">Fev/26 real</div><span class="com-status ok">▲ Meta: &gt;R$100</span></div>
+    <div class="com-card warn"><div class="com-label">Motivos N/A</div><div class="com-val" style="color:var(--amber)">61,5%</div><div class="com-meta">Sem motivo registrado</div><span class="com-status warn">⚠ Meta: &lt;20%</span></div>
+  </div>
+  <div class="gate-grid">
+    <div class="gate-card">
+      <div class="gate-title" style="color:var(--green)">🟢 Comissão Instalação</div>
+      <div class="gate-item"><span class="gate-name">Base por venda</span><span class="gate-val" style="color:var(--green)">R$ variável</span></div>
+      <div class="gate-item"><span class="gate-name">Gatilho 1: Churn &lt; 3%</span><span class="gate-val" style="color:var(--amber)">⚠ Atual: 3,1%</span></div>
+      <div class="gate-item"><span class="gate-name">Gatilho 2: Mín. 150 inst/mês</span><span class="gate-val" style="color:var(--green)">✓ Atual: 186</span></div>
+      <div class="gate-item"><span class="gate-name">Bônus ticket &gt; R$110</span><span class="gate-val" style="color:var(--muted)">+10% comissão</span></div>
+      <div class="gate-item"><span class="gate-name">Penalidade N/A motivo</span><span class="gate-val" style="color:var(--red)">-5% se &gt;20%</span></div>
+    </div>
+    <div class="gate-card">
+      <div class="gate-title" style="color:var(--blue)">🔵 Comissão Atendimento</div>
+      <div class="gate-item"><span class="gate-name">Base por meta chat</span><span class="gate-val" style="color:var(--blue)">R$ variável</span></div>
+      <div class="gate-item"><span class="gate-name">Gatilho 1: Reincid. &lt; 20%</span><span class="gate-val" style="color:var(--red)">✗ Atual: 19,4%</span></div>
+      <div class="gate-item"><span class="gate-name">Gatilho 2: Ratio &gt; 12</span><span class="gate-val" style="color:var(--amber)">⚠ Alguns abaixo</span></div>
+      <div class="gate-item"><span class="gate-name">Bônus TA tel. &gt; 90%</span><span class="gate-val" style="color:var(--green)">✓ Fev/26: 98,1%</span></div>
+      <div class="gate-item"><span class="gate-name">Bônus resolução interna</span><span class="gate-val" style="color:var(--muted)">Ratio &gt; 15</span></div>
+    </div>
+    <div class="gate-card">
+      <div class="gate-title" style="color:var(--purple)">🟣 Comissão Financeiro</div>
+      <div class="gate-item"><span class="gate-name">Base por recuperação</span><span class="gate-val" style="color:var(--purple)">R$ variável</span></div>
+      <div class="gate-item"><span class="gate-name">Gatilho 1: Inadimp. &lt; 2%</span><span class="gate-val" style="color:var(--green)">✓ Atual: 1,98%</span></div>
+      <div class="gate-item"><span class="gate-name">Gatilho 2: Aging &gt;180d &lt;20%</span><span class="gate-val" style="color:var(--red)">✗ Atual: 19% ok</span></div>
+      <div class="gate-item"><span class="gate-name">Bônus por R$ recuperado</span><span class="gate-val" style="color:var(--muted)">5% do recuperado</span></div>
+      <div class="gate-item"><span class="gate-name">Meta suspensão ativa</span><span class="gate-val" style="color:var(--amber)">⚠ 1.024 casos</span></div>
+    </div>
+  </div>
+
+  <div class="st mt3">KPIs <span class="acc">Financeiro</span></div>
+  <div class="com-grid">
+    <div class="com-card ok"><div class="com-label">Taxa Adimplência</div><div class="com-val" style="color:var(--green)">98,0%</div><div class="com-meta">68.227 quitados</div><span class="com-status ok">▲ Excelente</span></div>
+    <div class="com-card bad"><div class="com-label">Aging Crítico &gt;90d</div><div class="com-val" style="color:var(--red)">57,2%</div><div class="com-meta">790 de 1.547 casos</div><span class="com-status bad">✗ Meta: &lt;30%</span></div>
+    <div class="com-card warn"><div class="com-label">Saldo Total Aberto</div><div class="com-val" style="color:var(--amber)">R$158K</div><div class="com-meta">1.547 inadimplentes</div><span class="com-status warn">⚠ Reduzir</span></div>
+    <div class="com-card warn"><div class="com-label">Suspensos por Débito</div><div class="com-val" style="color:var(--amber)">393</div><div class="com-meta">R$37,4K/mês em risco</div><span class="com-status warn">⚠ Recuperar</span></div>
+    <div class="com-card neu"><div class="com-label">Receita em Risco</div><div class="com-val" style="color:var(--blue)">R$98K</div><div class="com-meta">12% da receita ativa</div><span class="com-status neu">● Monitorar</span></div>
+  </div>
+
+  <div class="st mt3">KPIs <span class="acc">Atendimento</span></div>
+  <div class="com-grid">
+    <div class="com-card ok"><div class="com-label">TA Telefone Fev/26</div><div class="com-val" style="color:var(--green)">98,1%</div><div class="com-meta">2.079 / 2.134</div><span class="com-status ok">▲ Meta: &gt;90%</span></div>
+    <div class="com-card bad"><div class="com-label">Reincidência 11+</div><div class="com-val" style="color:var(--red)">19,4%</div><div class="com-meta">2.757 clientes</div><span class="com-status bad">✗ Meta: &lt;15%</span></div>
+    <div class="com-card warn"><div class="com-label">TMA Médio</div><div class="com-val" style="color:var(--amber)">46s</div><div class="com-meta">Tempo médio atend.</div><span class="com-status warn">⚠ Meta: &lt;40s</span></div>
+    <div class="com-card bad"><div class="com-label">TME (Espera)</div><div class="com-val" style="color:var(--red)">59s</div><div class="com-meta">Tempo fila</div><span class="com-status bad">✗ Meta: &lt;45s</span></div>
+    <div class="com-card warn"><div class="com-label">Automação Chat</div><div class="com-val" style="color:var(--amber)">37,8%</div><div class="com-meta">33.427 chats bot</div><span class="com-status warn">● Meta: &gt;40%</span></div>
+  </div>
+
+  <div class="st mt3">Ranking <span class="acc">Individual</span> — Atendentes</div>
+  <div class="cc"><div class="cct"><strong>Score de Comissionamento por Atendente</strong><span>Ratio resolução + Volume chat + TA telefone (ponderado)</span></div>
+  <div class="tw">
+    <table class="dt">
+      <thead><tr><th>Rank</th><th>Atendente</th><th>Chat Total</th><th>Tel Total</th><th>Contatos</th><th>Ratio Chat/OS</th><th>TA Tel.</th><th>Score</th><th>Status Comis.</th></tr></thead>
+      <tbody>
+        <tr><td>🥇</td><td>Rafael Mendes</td><td>14.809</td><td>267</td><td>15.076</td><td style="color:var(--green)">30,5</td><td style="color:var(--green)">94%</td><td style="color:var(--green)"><strong>★★★★★</strong></td><td><span class="pill pill-g">Elegível</span></td></tr>
+        <tr><td>🥈</td><td>Priscila Costa</td><td>9.698</td><td>224</td><td>9.922</td><td style="color:var(--amber)">17,0</td><td style="color:var(--amber)">85%</td><td style="color:var(--green)"><strong>★★★★</strong></td><td><span class="pill pill-g">Elegível</span></td></tr>
+        <tr><td>🥉</td><td>Larissa Souza</td><td>8.683</td><td>239</td><td>8.922</td><td style="color:var(--amber)">10,6</td><td style="color:var(--amber)">75%</td><td style="color:var(--amber)"><strong>★★★</strong></td><td><span class="pill pill-a">Parcial</span></td></tr>
+        <tr><td>4</td><td>Camila Ferreira</td><td>11.154</td><td>39</td><td>11.193</td><td style="color:var(--red)">9,2</td><td style="color:var(--muted)">79%</td><td style="color:var(--amber)"><strong>★★★</strong></td><td><span class="pill pill-a">Parcial</span></td></tr>
+        <tr><td>5</td><td>Eduardo Nunes</td><td>6.774</td><td>273</td><td>7.047</td><td style="color:var(--orange)">9,6</td><td style="color:var(--green)">89%</td><td style="color:var(--amber)"><strong>★★★</strong></td><td><span class="pill pill-a">Parcial</span></td></tr>
+        <tr><td>6</td><td>Beatriz Lima</td><td>7.071</td><td>203</td><td>7.274</td><td style="color:var(--red)">7,4</td><td style="color:var(--amber)">78%</td><td style="color:var(--orange)"><strong>★★</strong></td><td><span class="pill pill-o">Revisar</span></td></tr>
+        <tr><td>7</td><td>Juliana Dias</td><td>4.154</td><td>—</td><td>4.154</td><td style="color:var(--orange)">9,6</td><td style="color:var(--muted)">—</td><td style="color:var(--orange)"><strong>★★</strong></td><td><span class="pill pill-o">Revisar</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+  <div class="g2 mt">
+    <div class="cc"><div class="cct"><strong>Volume Total de Contatos — Ranking</strong></div><canvas id="k_cont"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Ratio Resolução Interna — Ranking</strong></div><canvas id="k_ratio"></canvas></div>
+  </div>
+  <div class="bn bn-g mt3" style="margin-top:24px">
+    <div style="font-size:22px">💡</div>
+    <div>
+      <div class="bn-title" style="color:var(--green)">MODELO SUGERIDO DE COMISSIONAMENTO</div>
+      <div class="bn-text"><strong>Comercial:</strong> Comissão base por instalação + bônus de 10% se churn mensal &lt;3% + bônus de R$X por ticket &gt;R$110 + penalidade de -5% se motivos N/A &gt;20%.<br><strong>Atendimento:</strong> Bônus mensal se reincidência &lt;15% + bônus por ratio Chat/OS &gt;15 (resolução interna) + bônus TA tel. &gt;90%.<br><strong>Financeiro:</strong> Comissão de 5% sobre valor recuperado de inadimplentes + bônus se aging &gt;180d cair abaixo de 25%.<br><strong>Campo:</strong> Não aplicável enquanto concentração técnica não for corrigida — risco de distorção de indicadores.</div>
+    </div>
+  </div>
+
+
+</div></section>
 </div>
 
-<!-- ═══════════════════════════════════════════════════
-     PAINEL COMERCIAL
-═══════════════════════════════════════════════════ -->
 <div class="panel" id="panel-comercial">
 <section class="hero hero-g">
   <div class="wrap">
@@ -386,7 +529,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.01)}
 </section>
 <div class="div"></div>
 <section><div class="wrap">
-  <div class="st">Volume de <span class="acc">Vendas</span></div>
+<div class="st">Volume de <span class="acc">Vendas</span></div>
   <div class="g2">
     <div class="cc"><div class="cct"><strong>Instalações vs Cancelamentos por Mês</strong></div><canvas id="c_ic"></canvas></div>
     <div class="cc"><div class="cct"><strong>Receita Gerada por Mês (Valor Vendido)</strong><span>Instalações × ticket médio do mês</span></div><canvas id="c_recvend"></canvas></div>
@@ -798,11 +941,9 @@ table.dt tr:hover td{background:rgba(255,255,255,.01)}
 
 
 </div></section>
+</div></section>
 </div>
 
-<!-- ═══════════════════════════════════════════════════
-     PAINEL FINANCEIRO
-═══════════════════════════════════════════════════ -->
 <div class="panel" id="panel-financeiro">
 <section class="hero hero-b">
   <div class="wrap">
@@ -819,6 +960,7 @@ table.dt tr:hover td{background:rgba(255,255,255,.01)}
 </section>
 <div class="div"></div>
 <section><div class="wrap">
+
   <div class="st">Comportamento <span class="acc">Financeiro</span></div>
   <div class="g2">
     <div class="cc"><div class="cct"><strong>Adimplentes vs Inadimplentes — por Mês de Vencimento</strong><span>Contagem real da base INADIMPLÊNCIA</span></div><canvas id="f_comp"></canvas></div>
@@ -873,230 +1015,11 @@ table.dt tr:hover td{background:rgba(255,255,255,.01)}
     </div>
     <div class="cc"><div class="cct"><strong>Projeção Receita com Recuperação vs Sem</strong></div><canvas id="f_proj_comp" style="max-height:220px"></canvas></div>
   </div>
-</div></section>
-</div>
 
-<!-- ═══════════════════════════════════════════════════
-     PAINEL ATENDIMENTO
-═══════════════════════════════════════════════════ -->
-<div class="panel" id="panel-atendimento">
-<section class="hero hero-p">
-  <div class="wrap">
-    <div class="ey ey-p">FibraLink Telecom · Atendimento 360° · Chat + Telefone + Ordens de Serviço</div>
-    <div class="htitle">ATENDIMENTO<br><span style="color:var(--purple)">360°</span></div>
-    <div class="hw"><span class="wbadge">Canais</span><strong style="color:var(--amber)">Chat · Telefone · OS</strong><span style="font-size:10px;color:var(--muted)">108.693 chats · 4.531 ligações · 5.914 OS</span></div>
-    <div class="kg kg4">
-      <div class="kc kc-p"><div class="kl">Total Interações</div><div class="kv">106K+</div><div class="kd kd-bl">● Todos os canais</div><div class="ks">Chat+Tel+OS</div></div>
-      <div class="kc kc-b" style="animation-delay:.07s"><div class="kl">TA Telefone Fev/26</div><div class="kv">98,1%</div><div class="kd kd-up">▲ Nov/25 era 61,9%</div><div class="ks">TMA: 46s · TME: 59s</div></div>
-      <div class="kc kc-g" style="animation-delay:.14s"><div class="kl">Automação Chat</div><div class="kv">37,8%</div><div class="kd kd-up">▲ 33.427 sem operador</div><div class="ks">65,6% atendente real</div></div>
-      <div class="kc kc-a" style="animation-delay:.21s"><div class="kl">Reincidência 11+</div><div class="kv">19,4%</div><div class="kd kd-dn">▼ 2.757 clientes</div><div class="ks">11+ contatos em 2025</div></div>
-    </div>
-  </div>
-</section>
-<div class="div"></div>
-<section><div class="wrap">
-  <div class="st">Total de <span class="acc">Contatos</span> por Atendente</div>
-  <div class="cc"><div class="cct"><strong>Contatos Totais por Canal — Chat + Telefone</strong><span>Barras separadas por canal · Dados reais com mapeamento de ramais</span></div><canvas id="a_total_cont" style="max-height:260px"></canvas></div>
+<div style="border-top:1px solid var(--border2);margin:32px 0 8px"></div>
 
+<div class="st mt3">Gestão de <span class="acc">Custos</span> &amp; DRE</div>
 
-  <div class="cc mt2"><div class="cct"><strong>Volume de Atendimento por Pessoa — Últimos 12 Meses</strong><span>Mar/25 → Fev/26 · Chat + Telefone · linha por atendente</span></div><canvas id="a_vol12" style="max-height:300px"></canvas></div>
-
-  <div class="st mt3">Atendimento <span class="acc">Chat</span></div>
-  <div class="g32">
-    <div>
-      <div class="cc"><div class="cct"><strong>Volume Mensal de Chats</strong><span>Jan/25 → Fev/26</span></div><canvas id="a_chat"></canvas></div>
-      <div class="cc mt"><div class="cct"><strong>Chat por Dia da Semana</strong></div><canvas id="a_chat_dia" style="max-height:190px"></canvas></div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="cc"><div class="cct"><strong>Top Atendentes — Chat</strong><span>Volume total</span></div>
-        <div class="rl mt" style="margin-top:4px">
-          <div class="ri"><div class="rn">1</div><div><div class="rname">Rafael Mendes</div><div class="rbar"><div class="rbf" style="width:100%;background:var(--purple)"></div></div></div><div class="rval">14.809</div></div>
-          <div class="ri"><div class="rn">2</div><div><div class="rname">Camila Ferreira</div><div class="rbar"><div class="rbf" style="width:75.3%;background:var(--purple)"></div></div></div><div class="rval">11.154</div></div>
-          <div class="ri"><div class="rn">3</div><div><div class="rname">Priscila Costa</div><div class="rbar"><div class="rbf" style="width:65.5%;background:var(--blue)"></div></div></div><div class="rval">9.698</div></div>
-          <div class="ri"><div class="rn">4</div><div><div class="rname">Larissa Souza</div><div class="rbar"><div class="rbf" style="width:58.7%;background:var(--blue)"></div></div></div><div class="rval">8.683</div></div>
-          <div class="ri"><div class="rn">5</div><div><div class="rname">Beatriz Lima</div><div class="rbar"><div class="rbf" style="width:47.8%;background:var(--green)"></div></div></div><div class="rval">7.071</div></div>
-          <div class="ri"><div class="rn">6</div><div><div class="rname">Eduardo Nunes</div><div class="rbar"><div class="rbf" style="width:45.7%;background:var(--green)"></div></div></div><div class="rval">6.774</div></div>
-          <div class="ri"><div class="rn">7</div><div><div class="rname">Juliana Dias</div><div class="rbar"><div class="rbf" style="width:28%;background:var(--amber)"></div></div></div><div class="rval">4.154</div></div>
-        </div>
-      </div>
-      <div class="cc"><div class="cct"><strong>Departamentos Chat</strong></div><canvas id="a_depto" style="max-height:170px"></canvas></div>
-      <div class="cc"><div class="cct"><strong>Reincidência de Clientes</strong></div><canvas id="a_reinc" style="max-height:150px"></canvas></div>
-    </div>
-  </div>
-
-  <div class="st mt3">Atendimento <span class="acc">Telefone</span></div>
-  <div class="kg kg4">
-    <div class="kc kc-b"><div class="kl">Total Ligações</div><div class="kv">4.531</div><div class="kd kd-bl">● Nov/25 + Fev/26</div><div class="ks">2 meses de dados</div></div>
-    <div class="kc kc-g" style="animation-delay:.07s"><div class="kl">Atendidas</div><div class="kv">3.239</div><div class="kd kd-up">▲ TA: 83,6%</div><div class="ks">Fev/26: 98,1%</div></div>
-    <div class="kc kc-r" style="animation-delay:.14s"><div class="kl">Não Atendidas</div><div class="kv">769</div><div class="kd kd-dn">▼ 19,2% falha</div><div class="ks">Nov/25 maior falha</div></div>
-    <div class="kc kc-a" style="animation-delay:.21s"><div class="kl">TMA Médio</div><div class="kv">46s</div><div class="kd kd-bl">● TME espera: 59s</div><div class="ks">Dur. total ~112h</div></div>
-  </div>
-  <div class="g2">
-    <div class="cc"><div class="cct"><strong>Ligações por Atendente (Ramal)</strong><span>Mapeamento: Camila→103, Priscila→100, Beatriz→101, Eduardo→105, Rafael→104, Larissa→107, Thiago→102</span></div><canvas id="a_tel_op"></canvas></div>
-    <div class="cc"><div class="cct"><strong>TMA e TA por Atendente (Telefone)</strong></div><canvas id="a_tel_tma"></canvas></div>
-  </div>
-  <div class="g3 mt">
-    <div class="cc"><div class="cct"><strong>Volume por Hora do Dia</strong><span>Pico às 14h</span></div><canvas id="a_tel_hora"></canvas></div>
-    <div class="cc"><div class="cct"><strong>Ligações por Dia da Semana</strong></div><canvas id="a_tel_dia" style="max-height:210px"></canvas></div>
-    <div class="cc"><div class="cct"><strong>Nov/25 vs Fev/26</strong><span>Evolução do atendimento</span></div><canvas id="a_tel_comp" style="max-height:210px"></canvas></div>
-  </div>
-  <div class="g2 mt">
-    <div class="cc"><div class="cct"><strong>Distribuição por Fila</strong></div><canvas id="a_fila" style="max-height:210px"></canvas></div>
-    <div class="cc"><div class="cct"><strong>TMA vs TME por Fila (segundos)</strong></div><canvas id="a_tma_fila"></canvas></div>
-  </div>
-
-  <div class="st mt3">Ordens de <span class="acc">Serviço</span></div>
-  <div class="g2">
-    <div class="cc"><div class="cct"><strong>OS por Mês</strong><span>Colorido por volume</span></div><canvas id="a_os_mes"></canvas></div>
-    <div class="cc"><div class="cct"><strong>OS por Dia da Semana</strong><span>Quarta-feira lidera — planejamento de campo</span></div><canvas id="a_os_dia" style="max-height:210px"></canvas></div>
-  </div>
-  <div class="note mt"><strong>💡 Planejamento de Campo:</strong> Quarta-feira concentra 1.045 OS (19,8% do total), seguida por Terça (925) e Sexta (904). Seg-Qua concentram maior volume de manutenção. Sugestão: reservar Qui-Sex para instalações novas e Seg-Qua para reparos programados.</div>
-  <div class="g2 mt">
-    <div class="cc"><div class="cct"><strong>Tipos de OS — Ranking</strong></div><canvas id="a_os_tipo"></canvas></div>
-    <div class="cc"><div class="cct"><strong>Técnicos — Distribuição de OS</strong></div><canvas id="a_os_tec" style="max-height:210px"></canvas></div>
-  </div>
-
-  <div class="st mt3">Ratio <span class="acc">Resolução Interna</span> — (Chat + Telefone) por OS Aberta</div>
-  <div class="note" style="margin-bottom:16px"><strong>Como interpretar:</strong> O ratio considera <strong>todos os atendimentos (chat + ligações)</strong> dividido pelas OS abertas por aquele profissional. <strong>Ratio maior = melhor resolução interna</strong> — o atendente resolve mais pelo canal remoto sem gerar demanda de campo. Ranking decrescente — os melhores primeiro.</div>
-  <div class="cc"><div class="cct"><strong>Ranking de Resolução Interna — Ratio (Chat + Tel) ÷ OS Aberta</strong><span>Decrescente · maior = resolve mais sem acionar campo</span></div><canvas id="a_ratio" style="max-height:260px"></canvas></div>
-  <div class="tw mt">
-    <table class="dt">
-      <thead><tr><th>Rank</th><th>Atendente</th><th>Chat</th><th>Telefone</th><th>Total Contatos</th><th>OS Abertas</th><th>Ratio Total/OS</th><th>Perfil</th></tr></thead>
-      <tbody>
-        <tr><td>🥇 1</td><td>Rafael Mendes</td><td>14.809</td><td>267</td><td><strong>15.076</strong></td><td>486</td><td><strong style="color:var(--green)">31,0</strong></td><td><span class="pill pill-g">Alta Resolução</span></td></tr>
-        <tr><td>🥈 2</td><td>Sabrina</td><td>193</td><td>—</td><td><strong>193</strong></td><td>8</td><td><strong style="color:var(--green)">24,1</strong></td><td><span class="pill pill-g">Alta Resolução</span></td></tr>
-        <tr><td>🥉 3</td><td>Juliana</td><td>751</td><td>—</td><td><strong>751</strong></td><td>34</td><td><strong style="color:var(--green)">22,1</strong></td><td><span class="pill pill-g">Alta Resolução</span></td></tr>
-        <tr><td>4</td><td>Priscila Costa</td><td>9.698</td><td>224</td><td><strong>9.922</strong></td><td>582</td><td><strong style="color:var(--amber)">17,0</strong></td><td><span class="pill pill-a">Misto</span></td></tr>
-        <tr><td>5</td><td>Rodrigo</td><td>508</td><td>—</td><td><strong>508</strong></td><td>39</td><td><strong style="color:var(--amber)">13,0</strong></td><td><span class="pill pill-a">Misto</span></td></tr>
-        <tr><td>6</td><td>Larissa Souza</td><td>8.683</td><td>239</td><td><strong>8.922</strong></td><td>816</td><td><strong style="color:var(--amber)">10,9</strong></td><td><span class="pill pill-a">Misto</span></td></tr>
-        <tr><td>7</td><td>Eduardo Nunes</td><td>6.774</td><td>273</td><td><strong>7.047</strong></td><td>705</td><td><strong style="color:var(--orange)">10,0</strong></td><td><span class="pill pill-o">OS Frequente</span></td></tr>
-        <tr><td>8</td><td>Juliana Dias</td><td>4.154</td><td>—</td><td><strong>4.154</strong></td><td>434</td><td><strong style="color:var(--orange)">9,6</strong></td><td><span class="pill pill-o">OS Frequente</span></td></tr>
-        <tr><td>9</td><td>Camila Ferreira</td><td>11.154</td><td>39</td><td><strong>11.193</strong></td><td>1.215</td><td><strong style="color:var(--red)">9,2</strong></td><td><span class="pill pill-r">Maior Escalada</span></td></tr>
-        <tr><td>10</td><td>Beatriz*</td><td>7.071</td><td>203</td><td><strong>7.274</strong></td><td>961</td><td><strong style="color:var(--red)">7,6</strong></td><td><span class="pill pill-r">Especialista OS</span></td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="note mt"><strong>*Beatriz:</strong> Identificada por cruzamento de primeiro nome entre Chat (Beatriz Lima) e OS (BEATRIZ). Pode ter perfil especializado em triagem/abertura de OS, o que explicaria o ratio menor. Validar com gestão.</div>
-</div></section>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     PAINEL COMISSIONAMENTO
-═══════════════════════════════════════════════════ -->
-<div class="panel" id="panel-comissao">
-<section class="hero hero-c">
-  <div class="wrap">
-    <div class="ey ey-c">FibraLink Telecom · KPIs de Comissionamento · Indicadores Vitais por Função</div>
-    <div class="htitle">PAINEL DE<br><span style="color:var(--cyan)">COMISSÕES</span></div>
-    <div class="hw"><span class="wbadge">Modelo</span><strong style="color:var(--amber)">KPIs Gatilho + Metas + Bônus</strong><span style="font-size:10px;color:var(--muted)">Indicadores reais da base para calibrar comissionamento por função</span></div>
-  </div>
-</section>
-<div class="div"></div>
-<section><div class="wrap">
-  <div class="st">KPIs <span class="acc">Comercial Interno</span> — Vendedores &amp; Atendentes</div>
-  <div class="com-grid">
-    <div class="com-card ok"><div class="com-label">Instalações/Mês</div><div class="com-val" style="color:var(--green)">186</div><div class="com-meta">Média Jan/25→Fev/26</div><span class="com-status ok">▲ Meta: 200</span></div>
-    <div class="com-card warn"><div class="com-label">Churn Rate</div><div class="com-val" style="color:var(--amber)">3,1%</div><div class="com-meta">807 / 21 meses base</div><span class="com-status warn">⚠ Meta: &lt;3%</span></div>
-    <div class="com-card ok"><div class="com-label">Saldo Líquido</div><div class="com-val" style="color:var(--green)">+136</div><div class="com-meta">Média mensal real</div><span class="com-status ok">▲ Meta: &gt;120</span></div>
-    <div class="com-card ok"><div class="com-label">Ticket Médio</div><div class="com-val" style="color:var(--green)">R$103</div><div class="com-meta">Fev/26 real</div><span class="com-status ok">▲ Meta: &gt;R$100</span></div>
-    <div class="com-card warn"><div class="com-label">Motivos N/A</div><div class="com-val" style="color:var(--amber)">61,5%</div><div class="com-meta">Sem motivo registrado</div><span class="com-status warn">⚠ Meta: &lt;20%</span></div>
-  </div>
-  <div class="gate-grid">
-    <div class="gate-card">
-      <div class="gate-title" style="color:var(--green)">🟢 Comissão Instalação</div>
-      <div class="gate-item"><span class="gate-name">Base por venda</span><span class="gate-val" style="color:var(--green)">R$ variável</span></div>
-      <div class="gate-item"><span class="gate-name">Gatilho 1: Churn &lt; 3%</span><span class="gate-val" style="color:var(--amber)">⚠ Atual: 3,1%</span></div>
-      <div class="gate-item"><span class="gate-name">Gatilho 2: Mín. 150 inst/mês</span><span class="gate-val" style="color:var(--green)">✓ Atual: 186</span></div>
-      <div class="gate-item"><span class="gate-name">Bônus ticket &gt; R$110</span><span class="gate-val" style="color:var(--muted)">+10% comissão</span></div>
-      <div class="gate-item"><span class="gate-name">Penalidade N/A motivo</span><span class="gate-val" style="color:var(--red)">-5% se &gt;20%</span></div>
-    </div>
-    <div class="gate-card">
-      <div class="gate-title" style="color:var(--blue)">🔵 Comissão Atendimento</div>
-      <div class="gate-item"><span class="gate-name">Base por meta chat</span><span class="gate-val" style="color:var(--blue)">R$ variável</span></div>
-      <div class="gate-item"><span class="gate-name">Gatilho 1: Reincid. &lt; 20%</span><span class="gate-val" style="color:var(--red)">✗ Atual: 19,4%</span></div>
-      <div class="gate-item"><span class="gate-name">Gatilho 2: Ratio &gt; 12</span><span class="gate-val" style="color:var(--amber)">⚠ Alguns abaixo</span></div>
-      <div class="gate-item"><span class="gate-name">Bônus TA tel. &gt; 90%</span><span class="gate-val" style="color:var(--green)">✓ Fev/26: 98,1%</span></div>
-      <div class="gate-item"><span class="gate-name">Bônus resolução interna</span><span class="gate-val" style="color:var(--muted)">Ratio &gt; 15</span></div>
-    </div>
-    <div class="gate-card">
-      <div class="gate-title" style="color:var(--purple)">🟣 Comissão Financeiro</div>
-      <div class="gate-item"><span class="gate-name">Base por recuperação</span><span class="gate-val" style="color:var(--purple)">R$ variável</span></div>
-      <div class="gate-item"><span class="gate-name">Gatilho 1: Inadimp. &lt; 2%</span><span class="gate-val" style="color:var(--green)">✓ Atual: 1,98%</span></div>
-      <div class="gate-item"><span class="gate-name">Gatilho 2: Aging &gt;180d &lt;20%</span><span class="gate-val" style="color:var(--red)">✗ Atual: 19% ok</span></div>
-      <div class="gate-item"><span class="gate-name">Bônus por R$ recuperado</span><span class="gate-val" style="color:var(--muted)">5% do recuperado</span></div>
-      <div class="gate-item"><span class="gate-name">Meta suspensão ativa</span><span class="gate-val" style="color:var(--amber)">⚠ 1.024 casos</span></div>
-    </div>
-  </div>
-
-  <div class="st mt3">KPIs <span class="acc">Financeiro</span></div>
-  <div class="com-grid">
-    <div class="com-card ok"><div class="com-label">Taxa Adimplência</div><div class="com-val" style="color:var(--green)">98,0%</div><div class="com-meta">68.227 quitados</div><span class="com-status ok">▲ Excelente</span></div>
-    <div class="com-card bad"><div class="com-label">Aging Crítico &gt;90d</div><div class="com-val" style="color:var(--red)">57,2%</div><div class="com-meta">790 de 1.547 casos</div><span class="com-status bad">✗ Meta: &lt;30%</span></div>
-    <div class="com-card warn"><div class="com-label">Saldo Total Aberto</div><div class="com-val" style="color:var(--amber)">R$158K</div><div class="com-meta">1.547 inadimplentes</div><span class="com-status warn">⚠ Reduzir</span></div>
-    <div class="com-card warn"><div class="com-label">Suspensos por Débito</div><div class="com-val" style="color:var(--amber)">393</div><div class="com-meta">R$37,4K/mês em risco</div><span class="com-status warn">⚠ Recuperar</span></div>
-    <div class="com-card neu"><div class="com-label">Receita em Risco</div><div class="com-val" style="color:var(--blue)">R$98K</div><div class="com-meta">12% da receita ativa</div><span class="com-status neu">● Monitorar</span></div>
-  </div>
-
-  <div class="st mt3">KPIs <span class="acc">Atendimento</span></div>
-  <div class="com-grid">
-    <div class="com-card ok"><div class="com-label">TA Telefone Fev/26</div><div class="com-val" style="color:var(--green)">98,1%</div><div class="com-meta">2.079 / 2.134</div><span class="com-status ok">▲ Meta: &gt;90%</span></div>
-    <div class="com-card bad"><div class="com-label">Reincidência 11+</div><div class="com-val" style="color:var(--red)">19,4%</div><div class="com-meta">2.757 clientes</div><span class="com-status bad">✗ Meta: &lt;15%</span></div>
-    <div class="com-card warn"><div class="com-label">TMA Médio</div><div class="com-val" style="color:var(--amber)">46s</div><div class="com-meta">Tempo médio atend.</div><span class="com-status warn">⚠ Meta: &lt;40s</span></div>
-    <div class="com-card bad"><div class="com-label">TME (Espera)</div><div class="com-val" style="color:var(--red)">59s</div><div class="com-meta">Tempo fila</div><span class="com-status bad">✗ Meta: &lt;45s</span></div>
-    <div class="com-card warn"><div class="com-label">Automação Chat</div><div class="com-val" style="color:var(--amber)">37,8%</div><div class="com-meta">33.427 chats bot</div><span class="com-status warn">● Meta: &gt;40%</span></div>
-  </div>
-
-  <div class="st mt3">Ranking <span class="acc">Individual</span> — Atendentes</div>
-  <div class="cc"><div class="cct"><strong>Score de Comissionamento por Atendente</strong><span>Ratio resolução + Volume chat + TA telefone (ponderado)</span></div>
-  <div class="tw">
-    <table class="dt">
-      <thead><tr><th>Rank</th><th>Atendente</th><th>Chat Total</th><th>Tel Total</th><th>Contatos</th><th>Ratio Chat/OS</th><th>TA Tel.</th><th>Score</th><th>Status Comis.</th></tr></thead>
-      <tbody>
-        <tr><td>🥇</td><td>Rafael Mendes</td><td>14.809</td><td>267</td><td>15.076</td><td style="color:var(--green)">30,5</td><td style="color:var(--green)">94%</td><td style="color:var(--green)"><strong>★★★★★</strong></td><td><span class="pill pill-g">Elegível</span></td></tr>
-        <tr><td>🥈</td><td>Priscila Costa</td><td>9.698</td><td>224</td><td>9.922</td><td style="color:var(--amber)">17,0</td><td style="color:var(--amber)">85%</td><td style="color:var(--green)"><strong>★★★★</strong></td><td><span class="pill pill-g">Elegível</span></td></tr>
-        <tr><td>🥉</td><td>Larissa Souza</td><td>8.683</td><td>239</td><td>8.922</td><td style="color:var(--amber)">10,6</td><td style="color:var(--amber)">75%</td><td style="color:var(--amber)"><strong>★★★</strong></td><td><span class="pill pill-a">Parcial</span></td></tr>
-        <tr><td>4</td><td>Camila Ferreira</td><td>11.154</td><td>39</td><td>11.193</td><td style="color:var(--red)">9,2</td><td style="color:var(--muted)">79%</td><td style="color:var(--amber)"><strong>★★★</strong></td><td><span class="pill pill-a">Parcial</span></td></tr>
-        <tr><td>5</td><td>Eduardo Nunes</td><td>6.774</td><td>273</td><td>7.047</td><td style="color:var(--orange)">9,6</td><td style="color:var(--green)">89%</td><td style="color:var(--amber)"><strong>★★★</strong></td><td><span class="pill pill-a">Parcial</span></td></tr>
-        <tr><td>6</td><td>Beatriz Lima</td><td>7.071</td><td>203</td><td>7.274</td><td style="color:var(--red)">7,4</td><td style="color:var(--amber)">78%</td><td style="color:var(--orange)"><strong>★★</strong></td><td><span class="pill pill-o">Revisar</span></td></tr>
-        <tr><td>7</td><td>Juliana Dias</td><td>4.154</td><td>—</td><td>4.154</td><td style="color:var(--orange)">9,6</td><td style="color:var(--muted)">—</td><td style="color:var(--orange)"><strong>★★</strong></td><td><span class="pill pill-o">Revisar</span></td></tr>
-      </tbody>
-    </table>
-  </div>
-  </div>
-  <div class="g2 mt">
-    <div class="cc"><div class="cct"><strong>Volume Total de Contatos — Ranking</strong></div><canvas id="k_cont"></canvas></div>
-    <div class="cc"><div class="cct"><strong>Ratio Resolução Interna — Ranking</strong></div><canvas id="k_ratio"></canvas></div>
-  </div>
-  <div class="bn bn-g mt3" style="margin-top:24px">
-    <div style="font-size:22px">💡</div>
-    <div>
-      <div class="bn-title" style="color:var(--green)">MODELO SUGERIDO DE COMISSIONAMENTO</div>
-      <div class="bn-text"><strong>Comercial:</strong> Comissão base por instalação + bônus de 10% se churn mensal &lt;3% + bônus de R$X por ticket &gt;R$110 + penalidade de -5% se motivos N/A &gt;20%.<br><strong>Atendimento:</strong> Bônus mensal se reincidência &lt;15% + bônus por ratio Chat/OS &gt;15 (resolução interna) + bônus TA tel. &gt;90%.<br><strong>Financeiro:</strong> Comissão de 5% sobre valor recuperado de inadimplentes + bônus se aging &gt;180d cair abaixo de 25%.<br><strong>Campo:</strong> Não aplicável enquanto concentração técnica não for corrigida — risco de distorção de indicadores.</div>
-    </div>
-  </div>
-</div></section>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     PAINEL CONTAS A PAGAR / DRE
-═══════════════════════════════════════════════════ -->
-<div class="panel" id="panel-financeiro2">
-<section class="hero" style="padding-bottom:40px;position:relative;overflow:hidden">
-  <div style="position:absolute;top:-250px;right:-150px;width:650px;height:650px;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,.055) 0%,transparent 65%);pointer-events:none"></div>
-  <div class="wrap">
-    <div class="ey" style="color:var(--red)"><span style="width:24px;height:2px;background:var(--red);display:inline-block"></span> FibraLink Telecom · Gestão Financeira · Dados Ilustrativos</div>
-    <div class="htitle">CONTAS A<br><span style="color:var(--red)">PAGAR</span></div>
-    <div class="hw"><span class="wbadge">Referência</span><strong style="color:var(--amber)">Fev/2026</strong><span style="font-size:10px;color:var(--muted)">⚠ Dados fictícios para estruturação do modelo — substituir pelos reais</span></div>
-    <div class="kg kg4">
-      <div class="kc kc-r"><div class="kl">Total Custos/Mês</div><div class="kv">R$169K</div><div class="kd kd-bl">● Folha + Fixo + Var.</div><div class="ks">22 colaboradores</div></div>
-      <div class="kc kc-g" style="animation-delay:.07s"><div class="kl">EBITDA Estimado</div><div class="kv">R$654K</div><div class="kd kd-up">▲ Margem 78%</div><div class="ks">Receita R$823K/mês</div></div>
-      <div class="kc kc-o" style="animation-delay:.14s"><div class="kl">Folha Total c/ Enc.</div><div class="kv">R$101K</div><div class="kd kd-bl">● 60% dos custos</div><div class="ks">Encargos 68% CLT</div></div>
-      <div class="kc kc-b" style="animation-delay:.21s"><div class="kl">Custo por Cliente</div><div class="kv">R$24,18</div><div class="kd kd-up">▲ Eficiência alta</div><div class="ks">R$169K ÷ 6.971 clientes</div></div>
-    </div>
-  </div>
-</section>
-<div class="div"></div>
-<section><div class="wrap">
 
   <div class="st">DRE <span class="acc">Resumida</span> — Mensal</div>
   <div class="g21">
@@ -1235,29 +1158,114 @@ table.dt tr:hover td{background:rgba(255,255,255,.01)}
     </div>
   </div>
 
+
 </div></section>
 </div>
 
-<!-- ═══════════════════════════════════════════════════
-     PAINEL ESTOQUE
-═══════════════════════════════════════════════════ -->
-<div class="panel" id="panel-estoque">
-<section class="hero" style="padding-bottom:40px;position:relative;overflow:hidden">
-  <div style="position:absolute;top:-250px;right:-150px;width:650px;height:650px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,.055) 0%,transparent 65%);pointer-events:none"></div>
+<div class="panel" id="panel-operacoes">
+<section class="hero hero-p">
   <div class="wrap">
-    <div class="ey" style="color:var(--cyan)"><span style="width:24px;height:2px;background:var(--cyan);display:inline-block"></span> FibraLink Telecom · Gestão de Estoque · Dados Ilustrativos</div>
-    <div class="htitle">GESTÃO DE<br><span style="color:var(--cyan)">ESTOQUE</span></div>
-    <div class="hw"><span class="wbadge">Inventário</span><strong style="color:var(--amber)">Fev/2026</strong><span style="font-size:10px;color:var(--muted)">⚠ Dados fictícios para estruturação — substituir pelos reais do sistema de estoque</span></div>
+    <div class="ey ey-p">FibraLink Telecom · Atendimento 360° · Chat + Telefone + Ordens de Serviço</div>
+    <div class="htitle">ATENDIMENTO<br><span style="color:var(--purple)">360°</span></div>
+    <div class="hw"><span class="wbadge">Canais</span><strong style="color:var(--amber)">Chat · Telefone · OS</strong><span style="font-size:10px;color:var(--muted)">108.693 chats · 4.531 ligações · 5.914 OS</span></div>
     <div class="kg kg4">
-      <div class="kc kc-cyan"><div class="kl">Valor Total Estoque</div><div class="kv">R$134,6K</div><div class="kd kd-bl">● 15 SKUs ativos</div><div class="ks">Inventário atual</div></div>
-      <div class="kc kc-r" style="animation-delay:.07s"><div class="kl">Itens Críticos</div><div class="kv">1</div><div class="kd kd-dn">▼ Abaixo do mínimo</div><div class="ks">Roteador Mesh</div></div>
-      <div class="kc kc-a" style="animation-delay:.14s"><div class="kl">Itens em Alerta</div><div class="kv">1</div><div class="kd kd-am">⚠ Próximo do mínimo</div><div class="ks">OLT 16 portas</div></div>
-      <div class="kc kc-g" style="animation-delay:.21s"><div class="kl">Cobertura Média</div><div class="kv">63 dias</div><div class="kd kd-up">▲ Saudável</div><div class="ks">Baseado no giro/mês</div></div>
+      <div class="kc kc-p"><div class="kl">Total Interações</div><div class="kv">106K+</div><div class="kd kd-bl">● Todos os canais</div><div class="ks">Chat+Tel+OS</div></div>
+      <div class="kc kc-b" style="animation-delay:.07s"><div class="kl">TA Telefone Fev/26</div><div class="kv">98,1%</div><div class="kd kd-up">▲ Nov/25 era 61,9%</div><div class="ks">TMA: 46s · TME: 59s</div></div>
+      <div class="kc kc-g" style="animation-delay:.14s"><div class="kl">Automação Chat</div><div class="kv">37,8%</div><div class="kd kd-up">▲ 33.427 sem operador</div><div class="ks">65,6% atendente real</div></div>
+      <div class="kc kc-a" style="animation-delay:.21s"><div class="kl">Reincidência 11+</div><div class="kv">19,4%</div><div class="kd kd-dn">▼ 2.757 clientes</div><div class="ks">11+ contatos em 2025</div></div>
     </div>
   </div>
 </section>
 <div class="div"></div>
 <section><div class="wrap">
+
+  <div class="st">Total de <span class="acc">Contatos</span> por Atendente</div>
+  <div class="cc"><div class="cct"><strong>Contatos Totais por Canal — Chat + Telefone</strong><span>Barras separadas por canal · Dados reais com mapeamento de ramais</span></div><canvas id="a_total_cont" style="max-height:260px"></canvas></div>
+
+
+  <div class="cc mt2"><div class="cct"><strong>Volume de Atendimento por Pessoa — Últimos 12 Meses</strong><span>Mar/25 → Fev/26 · Chat + Telefone · linha por atendente</span></div><canvas id="a_vol12" style="max-height:300px"></canvas></div>
+
+  <div class="st mt3">Atendimento <span class="acc">Chat</span></div>
+  <div class="g32">
+    <div>
+      <div class="cc"><div class="cct"><strong>Volume Mensal de Chats</strong><span>Jan/25 → Fev/26</span></div><canvas id="a_chat"></canvas></div>
+      <div class="cc mt"><div class="cct"><strong>Chat por Dia da Semana</strong></div><canvas id="a_chat_dia" style="max-height:190px"></canvas></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="cc"><div class="cct"><strong>Top Atendentes — Chat</strong><span>Volume total</span></div>
+        <div class="rl mt" style="margin-top:4px">
+          <div class="ri"><div class="rn">1</div><div><div class="rname">Rafael Mendes</div><div class="rbar"><div class="rbf" style="width:100%;background:var(--purple)"></div></div></div><div class="rval">14.809</div></div>
+          <div class="ri"><div class="rn">2</div><div><div class="rname">Camila Ferreira</div><div class="rbar"><div class="rbf" style="width:75.3%;background:var(--purple)"></div></div></div><div class="rval">11.154</div></div>
+          <div class="ri"><div class="rn">3</div><div><div class="rname">Priscila Costa</div><div class="rbar"><div class="rbf" style="width:65.5%;background:var(--blue)"></div></div></div><div class="rval">9.698</div></div>
+          <div class="ri"><div class="rn">4</div><div><div class="rname">Larissa Souza</div><div class="rbar"><div class="rbf" style="width:58.7%;background:var(--blue)"></div></div></div><div class="rval">8.683</div></div>
+          <div class="ri"><div class="rn">5</div><div><div class="rname">Beatriz Lima</div><div class="rbar"><div class="rbf" style="width:47.8%;background:var(--green)"></div></div></div><div class="rval">7.071</div></div>
+          <div class="ri"><div class="rn">6</div><div><div class="rname">Eduardo Nunes</div><div class="rbar"><div class="rbf" style="width:45.7%;background:var(--green)"></div></div></div><div class="rval">6.774</div></div>
+          <div class="ri"><div class="rn">7</div><div><div class="rname">Juliana Dias</div><div class="rbar"><div class="rbf" style="width:28%;background:var(--amber)"></div></div></div><div class="rval">4.154</div></div>
+        </div>
+      </div>
+      <div class="cc"><div class="cct"><strong>Departamentos Chat</strong></div><canvas id="a_depto" style="max-height:170px"></canvas></div>
+      <div class="cc"><div class="cct"><strong>Reincidência de Clientes</strong></div><canvas id="a_reinc" style="max-height:150px"></canvas></div>
+    </div>
+  </div>
+
+  <div class="st mt3">Atendimento <span class="acc">Telefone</span></div>
+  <div class="kg kg4">
+    <div class="kc kc-b"><div class="kl">Total Ligações</div><div class="kv">4.531</div><div class="kd kd-bl">● Nov/25 + Fev/26</div><div class="ks">2 meses de dados</div></div>
+    <div class="kc kc-g" style="animation-delay:.07s"><div class="kl">Atendidas</div><div class="kv">3.239</div><div class="kd kd-up">▲ TA: 83,6%</div><div class="ks">Fev/26: 98,1%</div></div>
+    <div class="kc kc-r" style="animation-delay:.14s"><div class="kl">Não Atendidas</div><div class="kv">769</div><div class="kd kd-dn">▼ 19,2% falha</div><div class="ks">Nov/25 maior falha</div></div>
+    <div class="kc kc-a" style="animation-delay:.21s"><div class="kl">TMA Médio</div><div class="kv">46s</div><div class="kd kd-bl">● TME espera: 59s</div><div class="ks">Dur. total ~112h</div></div>
+  </div>
+  <div class="g2">
+    <div class="cc"><div class="cct"><strong>Ligações por Atendente (Ramal)</strong><span>Mapeamento: Camila→103, Priscila→100, Beatriz→101, Eduardo→105, Rafael→104, Larissa→107, Thiago→102</span></div><canvas id="a_tel_op"></canvas></div>
+    <div class="cc"><div class="cct"><strong>TMA e TA por Atendente (Telefone)</strong></div><canvas id="a_tel_tma"></canvas></div>
+  </div>
+  <div class="g3 mt">
+    <div class="cc"><div class="cct"><strong>Volume por Hora do Dia</strong><span>Pico às 14h</span></div><canvas id="a_tel_hora"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Ligações por Dia da Semana</strong></div><canvas id="a_tel_dia" style="max-height:210px"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Nov/25 vs Fev/26</strong><span>Evolução do atendimento</span></div><canvas id="a_tel_comp" style="max-height:210px"></canvas></div>
+  </div>
+  <div class="g2 mt">
+    <div class="cc"><div class="cct"><strong>Distribuição por Fila</strong></div><canvas id="a_fila" style="max-height:210px"></canvas></div>
+    <div class="cc"><div class="cct"><strong>TMA vs TME por Fila (segundos)</strong></div><canvas id="a_tma_fila"></canvas></div>
+  </div>
+
+  <div class="st mt3">Ordens de <span class="acc">Serviço</span></div>
+  <div class="g2">
+    <div class="cc"><div class="cct"><strong>OS por Mês</strong><span>Colorido por volume</span></div><canvas id="a_os_mes"></canvas></div>
+    <div class="cc"><div class="cct"><strong>OS por Dia da Semana</strong><span>Quarta-feira lidera — planejamento de campo</span></div><canvas id="a_os_dia" style="max-height:210px"></canvas></div>
+  </div>
+  <div class="note mt"><strong>💡 Planejamento de Campo:</strong> Quarta-feira concentra 1.045 OS (19,8% do total), seguida por Terça (925) e Sexta (904). Seg-Qua concentram maior volume de manutenção. Sugestão: reservar Qui-Sex para instalações novas e Seg-Qua para reparos programados.</div>
+  <div class="g2 mt">
+    <div class="cc"><div class="cct"><strong>Tipos de OS — Ranking</strong></div><canvas id="a_os_tipo"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Técnicos — Distribuição de OS</strong></div><canvas id="a_os_tec" style="max-height:210px"></canvas></div>
+  </div>
+
+  <div class="st mt3">Ratio <span class="acc">Resolução Interna</span> — (Chat + Telefone) por OS Aberta</div>
+  <div class="note" style="margin-bottom:16px"><strong>Como interpretar:</strong> O ratio considera <strong>todos os atendimentos (chat + ligações)</strong> dividido pelas OS abertas por aquele profissional. <strong>Ratio maior = melhor resolução interna</strong> — o atendente resolve mais pelo canal remoto sem gerar demanda de campo. Ranking decrescente — os melhores primeiro.</div>
+  <div class="cc"><div class="cct"><strong>Ranking de Resolução Interna — Ratio (Chat + Tel) ÷ OS Aberta</strong><span>Decrescente · maior = resolve mais sem acionar campo</span></div><canvas id="a_ratio" style="max-height:260px"></canvas></div>
+  <div class="tw mt">
+    <table class="dt">
+      <thead><tr><th>Rank</th><th>Atendente</th><th>Chat</th><th>Telefone</th><th>Total Contatos</th><th>OS Abertas</th><th>Ratio Total/OS</th><th>Perfil</th></tr></thead>
+      <tbody>
+        <tr><td>🥇 1</td><td>Rafael Mendes</td><td>14.809</td><td>267</td><td><strong>15.076</strong></td><td>486</td><td><strong style="color:var(--green)">31,0</strong></td><td><span class="pill pill-g">Alta Resolução</span></td></tr>
+        <tr><td>🥈 2</td><td>Sabrina</td><td>193</td><td>—</td><td><strong>193</strong></td><td>8</td><td><strong style="color:var(--green)">24,1</strong></td><td><span class="pill pill-g">Alta Resolução</span></td></tr>
+        <tr><td>🥉 3</td><td>Juliana</td><td>751</td><td>—</td><td><strong>751</strong></td><td>34</td><td><strong style="color:var(--green)">22,1</strong></td><td><span class="pill pill-g">Alta Resolução</span></td></tr>
+        <tr><td>4</td><td>Priscila Costa</td><td>9.698</td><td>224</td><td><strong>9.922</strong></td><td>582</td><td><strong style="color:var(--amber)">17,0</strong></td><td><span class="pill pill-a">Misto</span></td></tr>
+        <tr><td>5</td><td>Rodrigo</td><td>508</td><td>—</td><td><strong>508</strong></td><td>39</td><td><strong style="color:var(--amber)">13,0</strong></td><td><span class="pill pill-a">Misto</span></td></tr>
+        <tr><td>6</td><td>Larissa Souza</td><td>8.683</td><td>239</td><td><strong>8.922</strong></td><td>816</td><td><strong style="color:var(--amber)">10,9</strong></td><td><span class="pill pill-a">Misto</span></td></tr>
+        <tr><td>7</td><td>Eduardo Nunes</td><td>6.774</td><td>273</td><td><strong>7.047</strong></td><td>705</td><td><strong style="color:var(--orange)">10,0</strong></td><td><span class="pill pill-o">OS Frequente</span></td></tr>
+        <tr><td>8</td><td>Juliana Dias</td><td>4.154</td><td>—</td><td><strong>4.154</strong></td><td>434</td><td><strong style="color:var(--orange)">9,6</strong></td><td><span class="pill pill-o">OS Frequente</span></td></tr>
+        <tr><td>9</td><td>Camila Ferreira</td><td>11.154</td><td>39</td><td><strong>11.193</strong></td><td>1.215</td><td><strong style="color:var(--red)">9,2</strong></td><td><span class="pill pill-r">Maior Escalada</span></td></tr>
+        <tr><td>10</td><td>Beatriz*</td><td>7.071</td><td>203</td><td><strong>7.274</strong></td><td>961</td><td><strong style="color:var(--red)">7,6</strong></td><td><span class="pill pill-r">Especialista OS</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note mt"><strong>*Beatriz:</strong> Identificada por cruzamento de primeiro nome entre Chat (Beatriz Lima) e OS (BEATRIZ). Pode ter perfil especializado em triagem/abertura de OS, o que explicaria o ratio menor. Validar com gestão.</div>
+
+<div style="border-top:1px solid var(--border2);margin:32px 0 8px"></div>
+<div class="st mt3">Gestão de <span class="acc">Estoque</span></div>
+<div class="note" style="margin-bottom:16px">Inventário de equipamentos e materiais · dados ilustrativos — substituir pelos dados reais do sistema.</div>
+
 
   <div class="st">Inventário <span class="acc">Atual</span></div>
   <div class="g2">
@@ -1346,7 +1354,199 @@ table.dt tr:hover td{background:rgba(255,255,255,.01)}
     </div>
   </div>
 
+
 </div></section>
+</div>
+
+<div class="panel" id="panel-rede">
+<section class="hero hero-g" style="padding-bottom:40px">
+  <div class="wrap">
+    <div class="ey ey-g">FibraLink Telecom · Cobertura de Rede · Penetração · Market Share</div>
+    <div class="htitle">REDE &amp;<br><span style="color:var(--green)">MERCADO</span></div>
+    <div class="hw"><span class="wbadge">Base</span><strong style="color:var(--amber)">15 Zonas · Fev/2026</strong><span style="font-size:10px;color:var(--muted)">⚠ Dados de concorrência e domicílios são estimativas de mercado — calibrar com dados do IBGE e Anatel</span></div>
+    <div class="kg kg4">
+      <div class="kc kc-g"><div class="kl">Portas Ópticas Totais</div><div class="kv">10.060</div><div class="kd kd-bl">● 15 zonas cobertas</div><div class="ks">Capacidade instalada</div></div>
+      <div class="kc kc-b" style="animation-delay:.07s"><div class="kl">Ocupação Média</div><div class="kv">27,7%</div><div class="kd kd-up">▲ 7.275 portas livres</div><div class="ks">Capacidade p/ crescer</div></div>
+      <div class="kc kc-o" style="animation-delay:.14s"><div class="kl">Penetração Média</div><div class="kv">7,7%</div><div class="kd kd-am">⚠ Meta: 25–30%</div><div class="ks">Dos domicílios c/ fibra</div></div>
+      <div class="kc kc-cyan" style="animation-delay:.21s"><div class="kl">Market Share Médio</div><div class="kv">49,5%</div><div class="kd kd-up">▲ Liderança em 9/15</div><div class="ks">Dos clientes com fibra</div></div>
+    </div>
+  </div>
+</section>
+<div class="div"></div>
+<section><div class="wrap">
+
+
+  <div class="st">Portas Ópticas &amp; <span class="acc">Penetração</span> por Zona</div>
+  <div class="cc">
+    <div class="cct"><strong>Portas Totais vs Clientes Ativos vs Potencial — por Bairro</strong><span>Barras empilhadas · verde = ativo · cinza = livre · azul = potencial sem internet estimado</span></div>
+    <canvas id="r_portas" style="max-height:290px"></canvas>
+  </div>
+  <div class="g2 mt">
+    <div class="cc"><div class="cct"><strong>Taxa de Penetração por Zona</strong><span>% dos domicílios com FibraLink · benchmark ISP: 25–30%</span></div><canvas id="r_pen" style="max-height:260px"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Ocupação de Portas por Zona</strong><span>% portas ocupadas · alerta &gt;70% · crítico &gt;85%</span></div><canvas id="r_ocup" style="max-height:260px"></canvas></div>
+  </div>
+
+  <div class="st mt3"><span class="acc">Market Share</span> por Zona</div>
+  <div class="cc">
+    <div class="cct"><strong>Market Share FibraLink vs Concorrência — por Bairro</strong><span>% do total de assinantes de fibra em cada zona · estimativa de mercado</span></div>
+    <canvas id="r_ms" style="max-height:260px"></canvas>
+  </div>
+  <div class="g2 mt">
+    <div class="cc">
+      <div class="cct"><strong>Ranking de Market Share</strong><span>Liderança por zona</span></div>
+      <div class="rl mt" style="margin-top:4px">
+        <div class="ri"><div class="rn">1</div><div><div class="rname">Jardinópolis · Centro</div><div class="rbar"><div class="rbf" style="width:100%;background:var(--green)"></div></div></div><div class="rval" style="color:var(--green)">67,5%</div></div>
+        <div class="ri"><div class="rn">2</div><div><div class="rname">Cravinhos · Centro</div><div class="rbar"><div class="rbf" style="width:95.7%;background:var(--green)"></div></div></div><div class="rval" style="color:var(--green)">64,6%</div></div>
+        <div class="ri"><div class="rn">3</div><div><div class="rname">Serrana · Centro</div><div class="rbar"><div class="rbf" style="width:85.6%;background:var(--green)"></div></div></div><div class="rval" style="color:var(--green)">57,8%</div></div>
+        <div class="ri"><div class="rn">4</div><div><div class="rname">RP · Jd. Independência</div><div class="rbar"><div class="rbf" style="width:83.7%;background:var(--blue)"></div></div></div><div class="rval" style="color:var(--blue)">56,5%</div></div>
+        <div class="ri"><div class="rn">5</div><div><div class="rname">Cravinhos · Dist. Ind.</div><div class="rbar"><div class="rbf" style="width:79.9%;background:var(--blue)"></div></div></div><div class="rval" style="color:var(--blue)">53,9%</div></div>
+        <div class="ri"><div class="rn">6</div><div><div class="rname">RP · Alto da Boa Vista</div><div class="rbar"><div class="rbf" style="width:76.1%;background:var(--blue)"></div></div></div><div class="rval" style="color:var(--blue)">51,4%</div></div>
+        <div class="ri"><div class="rn">7</div><div><div class="rname">RP · Santa Cruz</div><div class="rbar"><div class="rbf" style="width:76.7%;background:var(--blue)"></div></div></div><div class="rval" style="color:var(--blue)">51,8%</div></div>
+        <div class="ri"><div class="rn">8</div><div><div class="rname">RP · Quintino Facci</div><div class="rbar"><div class="rbf" style="width:75.8%;background:var(--amber)"></div></div></div><div class="rval" style="color:var(--amber)">51,2%</div></div>
+        <div class="ri"><div class="rn">9</div><div><div class="rname">RP · Vila Tibério</div><div class="rbar"><div class="rbf" style="width:69.9%;background:var(--amber)"></div></div></div><div class="rval" style="color:var(--amber)">47,2%</div></div>
+        <div class="ri"><div class="rn">10</div><div><div class="rname">RP · Campos Elíseos</div><div class="rbar"><div class="rbf" style="width:72.9%;background:var(--amber)"></div></div></div><div class="rval" style="color:var(--amber)">49,2%</div></div>
+        <div class="ri"><div class="rn">11</div><div><div class="rname">RP · Ipiranga</div><div class="rbar"><div class="rbf" style="width:62.7%;background:var(--orange)"></div></div></div><div class="rval" style="color:var(--orange)">42,3%</div></div>
+        <div class="ri"><div class="rn">12</div><div><div class="rname">RP · Jardim Paulista</div><div class="rbar"><div class="rbf" style="width:61.2%;background:var(--orange)"></div></div></div><div class="rval" style="color:var(--orange)">41,3%</div></div>
+        <div class="ri"><div class="rn">13</div><div><div class="rname">RP · Sumarezinho</div><div class="rbar"><div class="rbf" style="width:52.1%;background:var(--red)"></div></div></div><div class="rval" style="color:var(--red)">35,2%</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="cc"><div class="cct"><strong>Potencial Não Explorado — Domicílios sem Internet</strong><span>Oportunidade total de mercado por zona</span></div>
+        <canvas id="r_pot" style="max-height:220px"></canvas>
+      </div>
+      <div class="bn bn-g mt"><div style="font-size:20px">🎯</div><div>
+        <div class="bn-title" style="color:var(--green)">MAIOR OPORTUNIDADE</div>
+        <div class="bn-text"><strong>RP · Jardim Paulista</strong> tem 4.153 domicílios sem internet estimados — maior mercado não explorado. Com penetração atual de apenas 5,6% e market share de 41%, há espaço para triplicar a base só nesse bairro. <strong>Cravinhos · Centro</strong> já lidera com 64,6% de share mas ainda tem 1.691 domicílios sem serviço.</div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="st mt3">Tabela <span class="acc">Completa</span> — Rede por Zona</div>
+  <div class="cc">
+    <div class="cct"><strong>Detalhamento por Bairro — Portas · Penetração · Ocupação · Market Share</strong></div>
+    <div class="tw">
+      <table class="dt">
+        <thead><tr><th>Zona (Cidade · Bairro)</th><th>Portas</th><th>Clientes</th><th>Livres</th><th>Ocup.</th><th>Domicílios*</th><th>Penetração</th><th>Conc. Est.*</th><th>Market Share</th><th>Potencial</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Jardinópolis · Centro</td><td>620</td><td>249</td><td>371</td><td>40,2%</td><td>1.600</td><td><strong style="color:var(--green)">15,6%</strong></td><td>120</td><td><strong style="color:var(--green)">67,5%</strong></td><td>1.231</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>Cravinhos · Centro</td><td>860</td><td>329</td><td>531</td><td>38,3%</td><td>2.200</td><td><strong style="color:var(--green)">15,0%</strong></td><td>180</td><td><strong style="color:var(--green)">64,6%</strong></td><td>1.691</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>RP · Jd. Independência</td><td>640</td><td>208</td><td>432</td><td>32,5%</td><td>2.400</td><td>8,7%</td><td>160</td><td><strong style="color:var(--blue)">56,5%</strong></td><td>2.032</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>Serrana · Centro</td><td>480</td><td>130</td><td>350</td><td>27,1%</td><td>1.400</td><td>9,3%</td><td>95</td><td><strong style="color:var(--blue)">57,8%</strong></td><td>1.175</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>Cravinhos · Dist. Ind.</td><td>320</td><td>82</td><td>238</td><td>25,6%</td><td>900</td><td>9,1%</td><td>70</td><td><strong style="color:var(--blue)">53,9%</strong></td><td>748</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>RP · Alto da Boa Vista</td><td>680</td><td>196</td><td>484</td><td>28,8%</td><td>2.600</td><td>7,5%</td><td>185</td><td>51,4%</td><td>2.219</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>RP · Santa Cruz</td><td>420</td><td>129</td><td>291</td><td>30,7%</td><td>1.700</td><td>7,6%</td><td>120</td><td>51,8%</td><td>1.451</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>RP · Quintino Facci</td><td>480</td><td>147</td><td>333</td><td>30,6%</td><td>1.900</td><td>7,7%</td><td>140</td><td>51,2%</td><td>1.613</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>RP · Vila Tibério</td><td>720</td><td>206</td><td>514</td><td>28,6%</td><td>2.700</td><td>7,6%</td><td>230</td><td>47,2%</td><td>2.264</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>RP · Campos Elíseos</td><td>740</td><td>203</td><td>537</td><td>27,4%</td><td>2.800</td><td>7,2%</td><td>210</td><td>49,2%</td><td>2.387</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>RP · Ipiranga</td><td>980</td><td>213</td><td>767</td><td>21,7%</td><td>3.900</td><td>5,5%</td><td>290</td><td>42,3%</td><td>3.397</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>RP · Jardim Paulista</td><td>1.200</td><td>267</td><td>933</td><td>22,2%</td><td>4.800</td><td>5,6%</td><td>380</td><td>41,3%</td><td>4.153</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>RP · Sumarezinho</td><td>860</td><td>174</td><td>686</td><td>20,2%</td><td>3.400</td><td>5,1%</td><td>320</td><td><span style="color:var(--red)">35,2%</span></td><td>2.906</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>Sertãozinho · Centro</td><td>540</td><td>121</td><td>419</td><td>22,4%</td><td>1.800</td><td>6,7%</td><td>160</td><td>43,1%</td><td>1.519</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr><td>RP · Ribeirânia</td><td>520</td><td>131</td><td>389</td><td>25,2%</td><td>2.200</td><td>6,0%</td><td>180</td><td>42,1%</td><td>1.889</td><td><span class="est-badge est-ok">OK</span></td></tr>
+          <tr style="font-weight:600;background:rgba(255,255,255,.02)"><td>TOTAL / MÉDIA</td><td>10.060</td><td>2.785</td><td>7.275</td><td>27,7%</td><td>35.800</td><td>7,7%</td><td>2.820</td><td>49,5%</td><td>30.675</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note mt">* Dados de concorrência e domicílios são <strong>estimativas de mercado</strong>. Para precisão, cruzar com dados do Censo IBGE 2022 (domicílios por setor censitário) e relatórios da Anatel (SCM — Serviço de Comunicação Multimídia) por município.</div>
+  </div>
+
+  <div class="st mt3">KPIs de <span class="acc">Infraestrutura</span> &amp; Qualidade de Rede</div>
+  <div class="kpi-extra">
+    <div class="kpi-ex-card"><div class="kpi-ex-icon">⚡</div><div><div class="kpi-ex-val" style="color:var(--green)">99,72%</div><div class="kpi-ex-lbl">Uptime de Rede</div><div class="kpi-ex-sub">Benchmark: &gt;99,5%</div><div class="bench bench-ok">✓ Acima da meta</div></div></div>
+    <div class="kpi-ex-card"><div class="kpi-ex-icon">🔧</div><div><div class="kpi-ex-val" style="color:var(--amber)">4,2h</div><div class="kpi-ex-lbl">MTTR (Tempo Médio de Reparo)</div><div class="kpi-ex-sub">Benchmark: &lt;4h</div><div class="bench bench-warn">⚠ Próximo da meta</div></div></div>
+    <div class="kpi-ex-card"><div class="kpi-ex-icon">📡</div><div><div class="kpi-ex-val" style="color:var(--blue)">317</div><div class="kpi-ex-lbl">SPE (Assinantes/Funcionário)</div><div class="kpi-ex-sub">Benchmark ISP: 250–400</div><div class="bench bench-ok">✓ Dentro da faixa</div></div></div>
+    <div class="kpi-ex-card"><div class="kpi-ex-icon">🌐</div><div><div class="kpi-ex-val" style="color:var(--green)">R$0,24</div><div class="kpi-ex-lbl">Custo por GB de Trânsito</div><div class="kpi-ex-sub">R$11.300 / 48.000 GB</div><div class="bench bench-ok">✓ Monitorar crescimento</div></div></div>
+  </div>
+  <div class="kpi-extra">
+    <div class="kpi-ex-card"><div class="kpi-ex-icon">😊</div><div><div class="kpi-ex-val" style="color:var(--green)">67</div><div class="kpi-ex-lbl">NPS (Net Promoter Score)</div><div class="kpi-ex-sub">Benchmark excelente: &gt;50</div><div class="bench bench-ok">✓ Zona de excelência</div></div></div>
+    <div class="kpi-ex-card"><div class="kpi-ex-icon">🎯</div><div><div class="kpi-ex-val" style="color:var(--green)">80,6%</div><div class="kpi-ex-lbl">FCR (Resolução no 1º Contato)</div><div class="kpi-ex-sub">Benchmark ISP: &gt;70%</div><div class="bench bench-ok">✓ Acima da meta</div></div></div>
+    <div class="kpi-ex-card"><div class="kpi-ex-icon">💰</div><div><div class="kpi-ex-val" style="color:var(--orange)">R$320</div><div class="kpi-ex-lbl">CapEx por Instalação</div><div class="kpi-ex-sub">Payback: 2,9 meses</div><div class="bench bench-ok">✓ Retorno rápido</div></div></div>
+    <div class="kpi-ex-card"><div class="kpi-ex-icon">📈</div><div><div class="kpi-ex-val" style="color:var(--cyan)">R$109,42</div><div class="kpi-ex-lbl">ARPU Médio</div><div class="kpi-ex-sub">MRR total: R$762K</div><div class="bench bench-ok">✓ Acima benchmark BR</div></div></div>
+  </div>
+
+  <div class="st mt3">Mix de <span class="acc">Planos</span> — Receita por Velocidade</div>
+  <div class="g2">
+    <div class="cc"><div class="cct"><strong>Clientes e Receita por Plano</strong></div><canvas id="r_planos"></canvas></div>
+    <div class="cc"><div class="cct"><strong>Estratégia de Upsell — Potencial de ARPU</strong></div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+        <div style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15);border-radius:2px;padding:12px">
+          <div style="font-family:var(--Fm);font-size:9px;color:var(--blue);text-transform:uppercase;margin-bottom:4px">Migrar 350→500 Mega (1.130 clientes)</div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--muted)">+R$20/cliente × 1.130</span><span style="font-family:var(--Fd);font-size:24px;color:var(--blue)">+R$22.600/mês</span></div>
+        </div>
+        <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15);border-radius:2px;padding:12px">
+          <div style="font-family:var(--Fm);font-size:9px;color:var(--green);text-transform:uppercase;margin-bottom:4px">Migrar 500→700 Mega (20% da base 500)</div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--muted)">+R$10 × 659 clientes</span><span style="font-family:var(--Fd);font-size:24px;color:var(--green)">+R$6.590/mês</span></div>
+        </div>
+        <div style="background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.15);border-radius:2px;padding:12px">
+          <div style="font-family:var(--Fm);font-size:9px;color:var(--purple);text-transform:uppercase;margin-bottom:4px">Upsell para Giga (10% da base 700)</div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--muted)">+R$40 × 113 clientes</span><span style="font-family:var(--Fd);font-size:24px;color:var(--purple)">+R$4.520/mês</span></div>
+        </div>
+        <div style="background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.15);border-radius:2px;padding:12px">
+          <div style="font-family:var(--Fm);font-size:9px;color:var(--orange);text-transform:uppercase;margin-bottom:4px">Impacto total upsell (sem novos clientes)</div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--muted)">ARPU: R$109,42 → R$115,74</span><span style="font-family:var(--Fd);font-size:24px;color:var(--orange)">+R$33.710/mês</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="st mt3">Boas <span class="acc">Práticas</span> — KPIs para ISP de Fibra</div>
+  <div class="g3">
+    <div class="cc">
+      <div class="cct"><strong>Benchmarks de Mercado</strong></div>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="gate-item"><span class="gate-name">Penetração saudável (urbano)</span><span class="gate-val" style="color:var(--amber)">25–30%</span></div>
+        <div class="gate-item"><span class="gate-name">Penetração áreas menores</span><span class="gate-val" style="color:var(--green)">40–50% possível</span></div>
+        <div class="gate-item"><span class="gate-name">Market share dominância</span><span class="gate-val" style="color:var(--green)">&gt;50%</span></div>
+        <div class="gate-item"><span class="gate-name">Ocupação portas ideal</span><span class="gate-val" style="color:var(--amber)">60–80%</span></div>
+        <div class="gate-item"><span class="gate-name">Ocupação portas crítica</span><span class="gate-val" style="color:var(--red)">&gt;85%</span></div>
+        <div class="gate-item"><span class="gate-name">NPS excelente</span><span class="gate-val" style="color:var(--green)">&gt;50</span></div>
+        <div class="gate-item"><span class="gate-name">Uptime rede</span><span class="gate-val" style="color:var(--green)">&gt;99,5%</span></div>
+        <div class="gate-item"><span class="gate-name">MTTR</span><span class="gate-val" style="color:var(--amber)">&lt;4 horas</span></div>
+        <div class="gate-item"><span class="gate-name">FCR</span><span class="gate-val" style="color:var(--green)">&gt;70%</span></div>
+        <div class="gate-item"><span class="gate-name">SPE (assinantes/funcionário)</span><span class="gate-val" style="color:var(--blue)">250–400</span></div>
+        <div class="gate-item"><span class="gate-name">Churn mensal</span><span class="gate-val" style="color:var(--green)">&lt;1,5%</span></div>
+        <div class="gate-item"><span class="gate-name">Payback por instalação</span><span class="gate-val" style="color:var(--green)">&lt;6 meses</span></div>
+      </div>
+    </div>
+    <div class="cc">
+      <div class="cct"><strong>Indicadores a Implementar</strong></div>
+      <div style="display:flex;flex-direction:column;gap:0;font-size:11px">
+        <div style="padding:8px 0;border-bottom:1px solid var(--border2);display:flex;gap:9px"><span style="color:var(--orange);flex-shrink:0;font-weight:700">①</span><div><strong style="color:var(--text)">SLA por OS:</strong> Medir tempo de resolução por tipo de chamado (Sem Acesso, Suporte, Roteador) com meta de &lt;4h para críticos.</div></div>
+        <div style="padding:8px 0;border-bottom:1px solid var(--border2);display:flex;gap:9px"><span style="color:var(--blue);flex-shrink:0;font-weight:700">②</span><div><strong style="color:var(--text)">Uptime por nó/CTO:</strong> Monitorar disponibilidade por ponto de rede, não só geral, para identificar pontos críticos na malha.</div></div>
+        <div style="padding:8px 0;border-bottom:1px solid var(--border2);display:flex;gap:9px"><span style="color:var(--green);flex-shrink:0;font-weight:700">③</span><div><strong style="color:var(--text)">Custo por GB por zona:</strong> À medida que a base cresce, o custo de trânsito por cliente deve cair — monitorar esse índice mensalmente.</div></div>
+        <div style="padding:8px 0;border-bottom:1px solid var(--border2);display:flex;gap:9px"><span style="color:var(--purple);flex-shrink:0;font-weight:700">④</span><div><strong style="color:var(--text)">NPS por bairro:</strong> Identificar zonas com menor satisfação para priorizar investimentos em infraestrutura e atendimento.</div></div>
+        <div style="padding:8px 0;border-bottom:1px solid var(--border2);display:flex;gap:9px"><span style="color:var(--cyan);flex-shrink:0;font-weight:700">⑤</span><div><strong style="color:var(--text)">Truck Roll Rate:</strong> % de OS que exigem visita técnica presencial. Meta &lt;40% — reduzir com diagnóstico remoto e automação.</div></div>
+        <div style="padding:8px 0;border-bottom:1px solid var(--border2);display:flex;gap:9px"><span style="color:var(--amber);flex-shrink:0;font-weight:700">⑥</span><div><strong style="color:var(--text)">CAPEX/Homepassed:</strong> Custo de expansão por domicílio passado (fibra disponível mas não conectado), para priorizar expansão.</div></div>
+        <div style="padding:8px 0;display:flex;gap:9px"><span style="color:var(--red);flex-shrink:0;font-weight:700">⑦</span><div><strong style="color:var(--text)">Churn por zona:</strong> Identificar bairros com maior evasão e correlacionar com qualidade de rede e pressão competitiva local.</div></div>
+      </div>
+    </div>
+    <div class="cc">
+      <div class="cct"><strong>Fontes de Dados Externas Recomendadas</strong></div>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:11px;color:var(--muted)">
+        <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:2px;padding:11px">
+          <div style="font-family:var(--Fm);font-size:9px;color:var(--blue);text-transform:uppercase;margin-bottom:5px">Anatel — SCM / Painéis</div>
+          Relatório de prestadoras do Serviço de Comunicação Multimídia por município. Permite mapear concorrentes por CNPJ e volume de acessos declarados por localidade.
+        </div>
+        <div style="background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.15);border-radius:2px;padding:11px">
+          <div style="font-family:var(--Fm);font-size:9px;color:var(--orange);text-transform:uppercase;margin-bottom:5px">IBGE — Censo 2022</div>
+          Domicílios por setor censitário com internet, tipo de conexão e renda. Base definitiva para calcular penetração real e potencial de mercado por bairro.
+        </div>
+        <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:2px;padding:11px">
+          <div style="font-family:var(--Fm);font-size:9px;color:var(--green);text-transform:uppercase;margin-bottom:5px">Teleco.com.br</div>
+          Dados setoriais do mercado de telecomunicações brasileiro, ARPU médio por região, crescimento de fibra e benchmarks nacionais de ISPs.
+        </div>
+        <div style="background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);border-radius:2px;padding:11px">
+          <div style="font-family:var(--Fm);font-size:9px;color:var(--purple);text-transform:uppercase;margin-bottom:5px">Speedtest Intelligence (Ookla)</div>
+          Benchmarks de velocidade e latência por operadora e cidade. Útil para comparar qualidade percebida com concorrentes na sua área de atuação.
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</div></section>
+</div>
+
 </div>
 
 <!-- FOOTER -->
@@ -1369,10 +1569,9 @@ table.dt tr:hover td{background:rgba(255,255,255,.01)}
 function sw(id, el, color) {
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active','G','B','P','C'));
-  document.getElementById('panel-'+id).classList.add('active');
-  el.classList.add('active');
-  if(color) el.classList.add(color);
-  window.scrollTo({top:0,behavior:'smooth'});
+  var panel = document.getElementById('panel-'+id);
+  if(panel) panel.classList.add('active');
+  if(el){ el.classList.add('active'); if(color) el.classList.add(color); }
 }
 
 // ============ TICKER ============
